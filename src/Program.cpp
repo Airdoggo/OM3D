@@ -6,9 +6,12 @@
 #include <unordered_set>
 #include <unordered_map>
 
+#include <iostream>
+
 namespace OM3D {
 
 static std::string read_shader(const std::string& file_name, Span<const std::string> defines = {}) {
+    std::cout << file_name << "\n";
     auto content = read_text_file(std::string(shader_path) + file_name);
     if (!content.is_ok) {
         FATAL((std::string("Unable to read shader: \"") + std::string(shader_path) + '"').c_str());

@@ -14,12 +14,16 @@
 
 #include <imgui/imgui.h>
 
+#include <iomanip>
+#include <sstream>
 
 using namespace OM3D;
 
 static float delta_time = 0.0f;
 const glm::uvec2 window_size(1600, 900);
 
+static std::vector<float> time_buffer(10, 0.02);
+static size_t time_index = 0;
 
 void glfw_check(bool cond) {
     if(!cond) {
@@ -35,6 +39,23 @@ void update_delta_time() {
     const double new_time = program_time();
     delta_time = float(new_time - time);
     time = new_time;
+
+    time_buffer[time_index++] = delta_time;
+    time_index = time_index % time_buffer.size();
+}
+
+void update_fps(GLFWwindow* window) {
+    float total_time = 0.0;
+    
+    for (auto t : time_buffer)
+        total_time += t;
+    
+    float fps = time_buffer.size() / total_time; 
+
+    std::stringstream title;
+    title << "TP window - " << std::fixed << std::setprecision(2) << fps << " FPS";
+
+    glfwSetWindowTitle(window, title.str().c_str());
 }
 
 void process_inputs(GLFWwindow* window, Camera& camera) {
@@ -87,7 +108,7 @@ std::unique_ptr<Scene> create_default_scene() {
     auto scene = std::make_unique<Scene>();
 
     // Load default cube model
-    auto result = Scene::from_gltf(std::string(data_path) + "cube.glb");
+    auto result = Scene::from_gltf(std::string(data_path) + "forest_huge.glb");
     ALWAYS_ASSERT(result.is_ok, "Unable to load default scene");
     scene = std::move(result.value);
 
@@ -149,6 +170,7 @@ int main(int, char**) {
         }
 
         update_delta_time();
+        update_fps(window);
 
         if(const auto& io = ImGui::GetIO(); !io.WantCaptureMouse && !io.WantCaptureKeyboard) {
             process_inputs(window, scene_view.camera());

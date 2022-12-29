@@ -14,9 +14,19 @@ void SceneObject::render() const {
         return;
     }
 
-   _material->set_uniform(HASH("model"), transform());
-   _material->bind();
+    _material->set_uniform(HASH("model"), transform());
+    _material->bind();
     _mesh->draw();
+}
+
+void SceneObject::render(int nb_instances) const {
+    if(!_material || !_mesh) {
+        return;
+    }
+
+    //_material->set_uniform(HASH("model"), transform());
+    _material->bind();
+    _mesh->draw(nb_instances);
 }
 
 void SceneObject::set_transform(const glm::mat4& tr) {
@@ -25,6 +35,14 @@ void SceneObject::set_transform(const glm::mat4& tr) {
 
 const glm::mat4& SceneObject::transform() const {
     return _transform;
+}
+
+const BoundingSphere &SceneObject::get_bounding_sphere() const {
+    return _mesh->_bounding_sphere;
+}
+
+const std::shared_ptr<Material> &SceneObject::get_material() const {
+    return _material;
 }
 
 }

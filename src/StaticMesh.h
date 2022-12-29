@@ -14,6 +14,11 @@ struct MeshData {
     std::vector<u32> indices;
 };
 
+struct BoundingSphere {
+    glm::vec3 origin;
+    float radius;
+};
+
 class StaticMesh : NonCopyable {
 
     public:
@@ -24,6 +29,9 @@ class StaticMesh : NonCopyable {
         StaticMesh(const MeshData& data);
 
         void draw() const;
+        void draw(int nb_instances) const;
+
+        BoundingSphere _bounding_sphere;
 
     private:
         TypedBuffer<Vertex> _vertex_buffer;
