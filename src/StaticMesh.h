@@ -31,6 +31,8 @@ class StaticMesh : NonCopyable {
         void draw() const;
         void draw(int nb_instances) const;
 
+        bool operator==(const StaticMesh& other) const;
+
         BoundingSphere _bounding_sphere;
 
     private:

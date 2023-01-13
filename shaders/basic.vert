@@ -19,18 +19,19 @@ layout(binding = 0) uniform Data {
     FrameData frame;
 };
 
-//uniform mat4 model;
+uniform mat4 model;
+uniform bool instanced;
 
 layout(binding = 2) buffer ObjectModels {
     mat4 models[];
 };
 
 void main() {
-    const mat4 model = models[gl_InstanceID];
-    const vec4 position = model * vec4(in_pos, 1.0);
+    const mat4 model_matrix = instanced ? models[gl_InstanceID] : model;
+    const vec4 position = model_matrix * vec4(in_pos, 1.0);
 
-    out_normal = normalize(mat3(model) * in_normal);
-    out_tangent = normalize(mat3(model) * in_tangent_bitangent_sign.xyz);
+    out_normal = normalize(mat3(model_matrix) * in_normal);
+    out_tangent = normalize(mat3(model_matrix) * in_tangent_bitangent_sign.xyz);
     out_bitangent = cross(out_tangent, out_normal) * (in_tangent_bitangent_sign.w > 0.0 ? 1.0 : -1.0);
 
     out_uv = in_uv;

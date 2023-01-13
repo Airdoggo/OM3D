@@ -80,4 +80,8 @@ void StaticMesh::draw(int nb_instances) const {
     glDrawElementsInstanced(GL_TRIANGLES, int(_index_buffer.element_count()), GL_UNSIGNED_INT, nullptr, nb_instances);
 }
 
+bool StaticMesh::operator==(const StaticMesh& other) const {
+    return _vertex_buffer.element_count() == other._vertex_buffer.element_count()
+        && _index_buffer.element_count() == other._index_buffer.element_count();
+}
 }
