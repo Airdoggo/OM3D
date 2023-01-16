@@ -11,6 +11,7 @@
 #include <Texture.h>
 #include <Framebuffer.h>
 #include <ImGuiRenderer.h>
+#include <GBuffer.h>
 
 #include <imgui/imgui.h>
 
@@ -162,6 +163,7 @@ int main(int, char**) {
     Texture color(window_size, ImageFormat::RGBA8_UNORM);
     Framebuffer main_framebuffer(&depth, std::array{&lit});
     Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
+    GBuffer g_buffer = GBuffer(window_size);
 
     for(;;) {
         glfwPollEvents();
@@ -176,11 +178,20 @@ int main(int, char**) {
             process_inputs(window, scene_view.camera());
         }
 
+        // G-Buffer bind
+        {
+            g_buffer.Bind();
+        }
+
         // Render the scene
         {
-            main_framebuffer.bind();
+            //main_framebuffer.bind();
             scene_view.render();
         }
+
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 1);
+        g_buffer.Blit();
 
         // Apply a tonemap in compute shader
         {
