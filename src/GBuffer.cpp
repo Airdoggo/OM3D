@@ -25,8 +25,13 @@ namespace OM3D {
 
 	void GBuffer::Blit()
 	{
-		// TODO no negative value for normals
 		frameBuffer.blit(true);
 	}
 
+	void GBuffer::bind_textures()
+	{
+		textures[0].bind(0);
+		textures[1].bind(1);
+		depthTex.bind(2);
+	}
 }

@@ -156,12 +156,11 @@ int main(int, char**) {
     std::unique_ptr<Scene> scene = create_default_scene();
     SceneView scene_view(scene.get());
 
+    auto shading_program = Program::from_file("shading.comp");
     auto tonemap_program = Program::from_file("tonemap.comp");
 
-    Texture depth(window_size, ImageFormat::Depth32_FLOAT);
     Texture lit(window_size, ImageFormat::RGBA16_FLOAT);
     Texture color(window_size, ImageFormat::RGBA8_UNORM);
-    Framebuffer main_framebuffer(&depth, std::array{&lit});
     Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
     GBuffer g_buffer = GBuffer(window_size);
 
@@ -178,20 +177,21 @@ int main(int, char**) {
             process_inputs(window, scene_view.camera());
         }
 
-        // G-Buffer bind
-        {
-            g_buffer.Bind();
-        }
-
         // Render the scene
         {
-            //main_framebuffer.bind();
+            g_buffer.Bind();
             scene_view.render();
         }
 
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 1);
-        g_buffer.Blit();
+        // Screen-space shading
+        {
+            shading_program->bind();
+            shading_program->set_uniform(HASH("debug"), imgui.debug_mode);
+            //shading_program->set_uniform(HASH("inv_viewproj"), imgui.debug_mode);
+            g_buffer.bind_textures();
+            lit.bind_as_image(3, AccessType::WriteOnly);
+            glDispatchCompute(align_up_to(window_size.x, 8), align_up_to(window_size.y, 8), 1);
+        }
 
         // Apply a tonemap in compute shader
         {
@@ -220,6 +220,9 @@ int main(int, char**) {
                     scene_view = SceneView(scene.get());
                 }
             }
+
+            //imgui.load_existing_scene();
+            imgui.display_debug_mode();
         }
         imgui.finish();
 

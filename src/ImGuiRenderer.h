@@ -17,6 +17,11 @@ class ImGuiRenderer : NonMovable {
         void start();
         void finish();
 
+        void display_debug_mode();
+
+        const char *debug_views[4] = { "No debug", "Albedo", "Normals", "Depth" };
+        uint32_t debug_mode = 0;
+
     private:
         void render(const ImDrawData* draw_data);
         float update_delta_time();

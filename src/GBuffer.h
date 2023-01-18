@@ -20,11 +20,11 @@ namespace OM3D {
 
         ~GBuffer();
 
-        // bool Init(unsigned int WindowWidth, unsigned int WindowHeight);
-
         void Bind();
 
         void Blit();
+
+        void bind_textures();
 
     private:
         Texture textures[NUM_TEXTURES];

@@ -13,8 +13,8 @@ layout(location = 3) in vec3 in_position;
 layout(location = 4) in vec3 in_tangent;
 layout(location = 5) in vec3 in_bitangent;
 
-layout(location = 0) out vec3 normal;
-layout(location = 1) out vec4 albedo;
+layout(location = 0) out vec4 out_normal;
+layout(location = 1) out vec4 out_albedo;
 
 layout(binding = 0) uniform sampler2D in_texture;
 layout(binding = 1) uniform sampler2D in_normal_texture;
@@ -32,11 +32,11 @@ const vec3 ambient = vec3(0.0);
 void main() {
 #ifdef NORMAL_MAPPED
     const vec3 normal_map = unpack_normal_map(texture(in_normal_texture, in_uv).xy);
-    normal = normal_map.x * in_tangent +
+    const vec3 normal = normal_map.x * in_tangent +
                         normal_map.y * in_bitangent +
                         normal_map.z * in_normal;
 #else
-    normal = in_normal;
+    const vec3 normal = in_normal;
 #endif
 
     vec3 acc = frame.sun_color * max(0.0, dot(frame.sun_dir, normal)) + ambient;
@@ -56,14 +56,17 @@ void main() {
         acc += light.color * (NoL * att);
     }
 
-    albedo = vec4(in_color * acc, 1.0);
+    out_albedo = vec4(in_color * acc, 1.0);
 
 #ifdef TEXTURED
-    albedo *= texture(in_texture, in_uv);
+    out_albedo *= texture(in_texture, in_uv);
 #endif
 
 #ifdef DEBUG_NORMAL
-    albedo = vec4(normal * 0.5 + 0.5, 1.0);
+    out_albedo = vec4(normal * 0.5 + 0.5, 1.0);
 #endif
+
+    // Put normals between 0 and 1
+    out_normal = vec4(normal * 0.5 + 0.5, 1.0);
 }
 
