@@ -10,7 +10,7 @@ namespace OM3D {
 			glm::vec2(window_size), ImageFormat::RGBA8_UNORM);
 		depthTex = Texture(
 			glm::vec2(window_size), ImageFormat::Depth32_FLOAT);
-		frameBuffer = Framebuffer(&depthTex, std::array{&textures[NORMAL], &textures[ALBEDO]});
+		frameBuffer = Framebuffer(&depthTex, std::array{&textures[ALBEDO], &textures[NORMAL]});
 	}
 
 	GBuffer::~GBuffer()

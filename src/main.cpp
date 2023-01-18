@@ -109,7 +109,7 @@ std::unique_ptr<Scene> create_default_scene() {
     auto scene = std::make_unique<Scene>();
 
     // Load default cube model
-    auto result = Scene::from_gltf(std::string(data_path) + "forest_huge.glb");
+    auto result = Scene::from_gltf(std::string(data_path) + "forest.glb");
     ALWAYS_ASSERT(result.is_ok, "Unable to load default scene");
     scene = std::move(result.value);
 
@@ -156,11 +156,12 @@ int main(int, char**) {
     std::unique_ptr<Scene> scene = create_default_scene();
     SceneView scene_view(scene.get());
 
-    auto shading_program = Program::from_file("shading.comp");
+    auto shading_program = Program::from_files("shading.frag", "screen.vert");;
     auto tonemap_program = Program::from_file("tonemap.comp");
 
     Texture lit(window_size, ImageFormat::RGBA16_FLOAT);
     Texture color(window_size, ImageFormat::RGBA8_UNORM);
+    Framebuffer shading_buffer(nullptr, std::array{&lit});
     Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
     GBuffer g_buffer = GBuffer(window_size);
 
@@ -177,20 +178,27 @@ int main(int, char**) {
             process_inputs(window, scene_view.camera());
         }
 
+
         // Render the scene
         {
             g_buffer.Bind();
             scene_view.render();
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
 
         // Screen-space shading
         {
             shading_program->bind();
+            shading_buffer.bind();
+            
+            g_buffer.bind_textures();
+
             shading_program->set_uniform(HASH("debug"), imgui.debug_mode);
             //shading_program->set_uniform(HASH("inv_viewproj"), imgui.debug_mode);
-            g_buffer.bind_textures();
-            lit.bind_as_image(3, AccessType::WriteOnly);
-            glDispatchCompute(align_up_to(window_size.x, 8), align_up_to(window_size.y, 8), 1);
+
+            glDisable(GL_CULL_FACE);
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+            glEnable(GL_CULL_FACE);
         }
 
         // Apply a tonemap in compute shader

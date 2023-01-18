@@ -2,12 +2,11 @@
 
 #include "utils.glsl"
 
-layout(local_size_x = 8, local_size_y = 8) in;
-
 layout(binding = 0) uniform sampler2D in_albedo;
 layout(binding = 1) uniform sampler2D in_normal;
 layout(binding = 2) uniform sampler2D in_depth;
-layout(rgba8, binding = 3) uniform writeonly image2D out_color;
+
+layout(location = 0) out vec4 out_color;
 
 // Pseudo-enum for debugging options
 const uint NO_DEBUG = 0;
@@ -24,7 +23,8 @@ vec3 unproject(vec2 uv, float depth, mat4 inv_viewproj) {
 }
 
 void main() {
-    const ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    
+    const ivec2 coord = ivec2(gl_FragCoord.xy);
 
     const vec3 albedo = texelFetch(in_albedo, coord, 0).rgb;
     const float depth = texelFetch(in_depth, coord, 0).x;
@@ -34,14 +34,14 @@ void main() {
     vec3 color = albedo;//unproject(coord, depth, inv_proj);
 
     if (debug == NO_DEBUG)
-        imageStore(out_color, coord, vec4(linear_to_sRGB(color), 1.0));
+        out_color = vec4(linear_to_sRGB(color), 1.0);
     else if (debug == ALBEDO)
-        imageStore(out_color, coord, vec4(linear_to_sRGB(albedo), 1.0));
+        out_color = vec4(linear_to_sRGB(albedo), 1.0);
     else if (debug == NORMALS)
-        imageStore(out_color, coord, vec4(normal, 1.0));
+        out_color = vec4(normal, 1.0);
     else if (debug == DEPTH) {
         float d = depth * 1e5;
-        imageStore(out_color, coord, vec4(d, d, d, 1.0));
+        out_color = vec4(d, d, d, 1.0);
     }
 }
 
