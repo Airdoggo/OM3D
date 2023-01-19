@@ -1,5 +1,7 @@
 #include "Scene.h"
 
+#include <glad/glad.h>
+
 #include <TypedBuffer.h>
 
 #include <shader_structs.h>
@@ -66,7 +68,6 @@ namespace OM3D
 
     void Scene::render(const Camera &camera) const
     {
-        // Fill and bind frame data buffer
         TypedBuffer<shader::FrameData> buffer(nullptr, 1);
         {
             auto mapping = buffer.map(AccessType::WriteOnly);
@@ -76,7 +77,7 @@ namespace OM3D
             mapping[0].sun_dir = glm::normalize(_sun_direction);
         }
         buffer.bind(BufferUsage::Uniform, 0);
-
+        
         // Fill and bind lights buffer
         TypedBuffer<shader::PointLight> light_buffer(nullptr, std::max(_point_lights.size(), size_t(1)));
         {
@@ -130,6 +131,24 @@ namespace OM3D
             // Render every instance of this object
             v.front().render(int(i));
         }
+    }
+
+    void Scene::compute_lights(const Camera& camera, const Material &sun_light_material, const Material &point_light_material) const {
+        // Fill and bind frame data buffer
+        TypedBuffer<shader::FrameData> buffer(nullptr, 1);
+        {
+            auto mapping = buffer.map(AccessType::WriteOnly);
+            mapping[0].camera.view_proj = camera.view_proj_matrix();
+            mapping[0].point_light_count = u32(_point_lights.size());
+            mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
+            mapping[0].sun_dir = glm::normalize(_sun_direction);
+        }
+        buffer.bind(BufferUsage::Uniform, 0);
+        
+        sun_light_material.bind();
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        
+        //shading_program->set_uniform(HASH("inv_viewproj"), glm::inverse(scene_view.camera().view_proj_matrix()));
     }
 
 }

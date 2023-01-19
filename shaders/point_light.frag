@@ -11,14 +11,6 @@ uniform vec2 screen_size;
 
 layout(location = 0) out vec4 out_color;
 
-// Pseudo-enum for debugging options
-const uint NO_DEBUG = 0;
-const uint ALBEDO = 1;
-const uint NORMALS = 2;
-const uint DEPTH = 3;
-
-uniform uint debug;
-
 vec3 unproject(vec2 uv, float depth) {
     const vec3 ndc = vec3(uv * 2.0 - vec2(1.0), depth);
     const vec4 p = inv_viewproj * vec4(ndc, 1.0);
@@ -36,15 +28,6 @@ void main() {
 
     vec3 color = unproject(coord / screen_size, depth);
 
-    if (debug == NO_DEBUG)
-        out_color = vec4(linear_to_sRGB(color), 1.0);
-    else if (debug == ALBEDO)
-        out_color = vec4(linear_to_sRGB(albedo), 1.0);
-    else if (debug == NORMALS)
-        out_color = vec4(normal, 1.0);
-    else if (debug == DEPTH) {
-        float d = depth * 1e5;
-        out_color = vec4(d, d, d, 1.0);
-    }
+    out_color = vec4(linear_to_sRGB(color), 1.0);
 }
 

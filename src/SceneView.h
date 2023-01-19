@@ -14,6 +14,7 @@ class SceneView {
         const Camera& camera() const;
 
         void render() const;
+        void compute_lights(const Material &sun_light_material, const Material &point_light_material) const;
 
     private:
         const Scene* _scene = nullptr;

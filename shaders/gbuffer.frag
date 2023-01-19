@@ -39,7 +39,7 @@ void main() {
     const vec3 normal = in_normal;
 #endif
 
-    vec3 acc = frame.sun_color * max(0.0, dot(frame.sun_dir, normal)) + ambient;
+    vec3 acc = vec3(1.);
 
     for(uint i = 0; i != frame.point_light_count; ++i) {
         PointLight light = point_lights[i];

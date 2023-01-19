@@ -11,7 +11,6 @@
 #include <Texture.h>
 #include <Framebuffer.h>
 #include <ImGuiRenderer.h>
-#include <GBuffer.h>
 
 #include <imgui/imgui.h>
 
@@ -156,14 +155,23 @@ int main(int, char**) {
     std::unique_ptr<Scene> scene = create_default_scene();
     SceneView scene_view(scene.get());
 
-    auto shading_program = Program::from_files("shading.frag", "screen.vert");;
     auto tonemap_program = Program::from_file("tonemap.comp");
 
+    Texture albedo(window_size, ImageFormat::RGB8_sRGB);
+	Texture normals(window_size, ImageFormat::RGBA8_UNORM);
+	Texture depth(window_size, ImageFormat::Depth32_FLOAT);
     Texture lit(window_size, ImageFormat::RGBA16_FLOAT);
     Texture color(window_size, ImageFormat::RGBA8_UNORM);
-    Framebuffer shading_buffer(nullptr, std::array{&lit});
+
     Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
-    GBuffer g_buffer = GBuffer(window_size);
+    Framebuffer g_buffer(&depth, std::array{&albedo, &normals});
+    Framebuffer shading_buffer(&depth, std::array{&lit});
+
+    Material debug_material = Material::debug_material();
+    Material sun_light_material = Material::sun_light_material();
+    Material point_light_material = Material::point_light_material();
+
+    point_light_material.set_uniform(HASH("screen_size"), window_size);
 
     for(;;) {
         glfwPollEvents();
@@ -178,28 +186,30 @@ int main(int, char**) {
             process_inputs(window, scene_view.camera());
         }
 
-
         // Render the scene
         {
-            g_buffer.Bind();
+            g_buffer.bind();
             scene_view.render();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
 
-        // Screen-space shading
+        // Set the textures as input
+        debug_material.bind();
+        shading_buffer.bind();
+        albedo.bind(0);
+        normals.bind(1);
+        depth.bind(2);
+
+        if (imgui.debug_mode) // Debug view
         {
-            shading_program->bind();
-            shading_buffer.bind();
-            
-            g_buffer.bind_textures();
+            if (imgui.debug_mode == 3) // Allow background fragments to be modified for Depth view
+                glDepthFunc(GL_LEQUAL);
 
-            shading_program->set_uniform(HASH("debug"), imgui.debug_mode);
-            //shading_program->set_uniform(HASH("inv_viewproj"), imgui.debug_mode);
-
-            glDisable(GL_CULL_FACE);
+            debug_material.set_uniform(HASH("debug"), imgui.debug_mode);
             glDrawArrays(GL_TRIANGLES, 0, 3);
-            glEnable(GL_CULL_FACE);
         }
+        else // Screen-space light calculations
+            scene_view.compute_lights(sun_light_material, point_light_material);
 
         // Apply a tonemap in compute shader
         {

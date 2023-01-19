@@ -10,6 +10,7 @@
 namespace OM3D {
 
 enum class BlendMode {
+    NoBlendNoCulling,
     None,
     Alpha,
 };
@@ -18,7 +19,8 @@ enum class DepthTestMode {
     Standard,
     Reversed,
     Equal,
-    None
+    None,
+    Xor,
 };
 
 class Material {
@@ -30,19 +32,21 @@ class Material {
         void set_blend_mode(BlendMode blend);
         void set_depth_test_mode(DepthTestMode depth);
         void set_texture(u32 slot, std::shared_ptr<Texture> tex);
+        void set_write_z_buffer(bool val);
 
         template<typename... Args>
         void set_uniform(Args&&... args) {
             _program->set_uniform(FWD(args)...);
         }
 
-
         void bind() const;
 
         static std::shared_ptr<Material> empty_material();
         static Material textured_material();
         static Material textured_normal_mapped_material();
-
+        static Material debug_material();
+        static Material sun_light_material();
+        static Material point_light_material();
 
     private:
         std::shared_ptr<Program> _program;
@@ -50,6 +54,7 @@ class Material {
 
         BlendMode _blend_mode = BlendMode::None;
         DepthTestMode _depth_test_mode = DepthTestMode::Standard;
+        bool write_z_buffer = true;
 
 };
 

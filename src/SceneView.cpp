@@ -19,4 +19,10 @@ void SceneView::render() const {
     }
 }
 
+void SceneView::compute_lights(const Material &sun_light_material, const Material &point_light_material) const {
+    if(_scene) {
+        _scene->compute_lights(_camera, sun_light_material, point_light_material);
+    }
+}
+
 }
