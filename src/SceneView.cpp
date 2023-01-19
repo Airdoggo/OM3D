@@ -2,7 +2,7 @@
 
 namespace OM3D {
 
-SceneView::SceneView(const Scene* scene) : _scene(scene) {
+SceneView::SceneView(Scene* scene) : _scene(scene) {
 }
 
 Camera& SceneView::camera() {
@@ -23,6 +23,11 @@ void SceneView::compute_lights(const Material &sun_light_material, const Materia
     if(_scene) {
         _scene->compute_lights(_camera, sun_light_material, point_light_material);
     }
+}
+
+void SceneView::sort_front_to_back()
+{
+    _scene->sort_front_to_back(_camera);
 }
 
 }

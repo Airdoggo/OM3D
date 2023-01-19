@@ -8,6 +8,8 @@
 
 #include <iostream>
 
+#include <algorithm>
+
 namespace OM3D
 {
 
@@ -31,9 +33,18 @@ namespace OM3D
         _objects.back().emplace_back(std::move(obj));
     }
 
+
     void Scene::add_object(PointLight obj)
     {
         _point_lights.emplace_back(std::move(obj));
+    }
+
+    void Scene::sort_front_to_back(const Camera& camera)
+    {
+        for (auto& v : _objects)
+        {
+            std::sort(v.begin(), v.end(), front_to_back(camera));
+        }
     }
 
     bool frustum_cull(const SceneObject &obj, const Frustum &frustum, const glm::vec3 &camera)
@@ -120,7 +131,7 @@ namespace OM3D
         for (auto &v : _objects)
         {
             // Disable writing to frame and depth buffer
-            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+            // glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
             glDepthMask(GL_FALSE);
 
             size_t i = 0;

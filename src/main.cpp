@@ -186,6 +186,8 @@ int main(int, char**) {
             process_inputs(window, scene_view.camera());
         }
 
+        scene_view.sort_front_to_back();
+
         // Render the scene
         {
             g_buffer.bind();
