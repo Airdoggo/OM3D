@@ -14,6 +14,8 @@ void SceneObject::render() const {
         return;
     }
 
+    uint32_t instancing = 0;
+    _material->set_uniform(HASH("instancing"), instancing);
     _material->set_uniform(HASH("model"), transform());
     _material->bind();
     _mesh->draw();
@@ -23,8 +25,8 @@ void SceneObject::render(int nb_instances) const {
     if(!_material || !_mesh) {
         return;
     }
-
-    //_material->set_uniform(HASH("model"), transform());
+    uint32_t instancing = 1;
+    _material->set_uniform(HASH("instancing"), instancing);
     _material->bind();
     _mesh->draw(nb_instances);
 }

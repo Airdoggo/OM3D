@@ -13,6 +13,7 @@ namespace OM3D
 
     Scene::Scene()
     {
+        occlusion_query = OcclusionQuery();
     }
 
     void Scene::add_object(SceneObject obj)
@@ -66,6 +67,14 @@ namespace OM3D
         return true;
     }
 
+    bool compute_occlusion_query(const SceneObject& obj, OcclusionQuery occlusion_query) {
+        occlusion_query.beginQuery();
+        obj.render();
+        occlusion_query.endQuery();
+        
+        return occlusion_query.anySamplesPassed();
+    }
+
     void Scene::render(const Camera &camera) const
     {
         TypedBuffer<shader::FrameData> buffer(nullptr, 1);
@@ -110,15 +119,18 @@ namespace OM3D
 
         for (auto &v : _objects)
         {
-            size_t i = 0;
+            // Disable writing to frame and depth buffer
+            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+            glDepthMask(GL_FALSE);
 
+            size_t i = 0;
             // Fill and bind objects buffer
             TypedBuffer<shader::mat4> object_buffer(nullptr, std::max(v.size(), size_t(1)));
             {
                 auto mapping = object_buffer.map(AccessType::WriteOnly);
                 for (const SceneObject &obj : v)
                 {
-                    if (frustum_cull(obj, frustum, camera_pos))
+                    if (compute_occlusion_query(obj, occlusion_query))
                     {
                         mapping[i++] = {
                             obj.transform(),
@@ -126,7 +138,12 @@ namespace OM3D
                     }
                 }
             }
+            // std::cout << "visible: " << i << std::endl;
             object_buffer.bind(BufferUsage::Storage, 2);
+
+            // Enable writing to frame and depth buffer
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+            glDepthMask(GL_TRUE);
 
             // Render every instance of this object
             v.front().render(int(i));
