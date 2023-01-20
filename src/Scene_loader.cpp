@@ -285,8 +285,64 @@ static void compute_tangents(MeshData& mesh) {
     }
 }
 
+SceneObject create_light_volume_object(const std::string& file_name) {
+    tinygltf::TinyGLTF ctx;
+    tinygltf::Model gltf;
 
-Result<std::unique_ptr<Scene>> Scene::from_gltf(const std::string& file_name) {
+    {
+        std::string err;
+        std::string warn;
+
+        const bool is_ascii = ends_with(file_name, ".gltf");
+        const bool ok = is_ascii
+                ? ctx.LoadASCIIFromFile(&gltf, &err, &warn, file_name)
+                : ctx.LoadBinaryFromFile(&gltf, &err, &warn, file_name);
+
+        if(!err.empty()) {
+            std::cerr << "Error while loading gltf: " << err << std::endl;
+        }
+        if(!warn.empty()) {
+            std::cerr << "Warning while loading gltf: " << warn << std::endl;
+        }
+    }
+
+    std::unordered_map<int, std::shared_ptr<Texture>> textures;
+    std::unordered_map<int, std::shared_ptr<Material>> materials;
+    std::unordered_map<int, glm::mat4> node_transforms;
+
+    {
+        std::vector<int> node_indices;
+        if(gltf.defaultScene >= 0) {
+            node_indices = gltf.scenes[gltf.defaultScene].nodes;
+        } else {
+            for(u32 i = 0; i != gltf.nodes.size(); ++i) {
+                node_indices.push_back(i);
+                node_transforms[i] = base_transform();
+            }
+        }
+
+        for(int node : node_indices) {
+            parse_node_transforms(node, gltf, node_transforms);
+        }
+    }
+
+    auto [node_index, node_transform] = *node_transforms.begin();
+    const tinygltf::Node& node = gltf.nodes[node_index];
+
+    const tinygltf::Mesh& gltf_mesh = gltf.meshes[node.mesh];
+
+    const tinygltf::Primitive& prim = gltf_mesh.primitives.front();
+
+    auto mesh = build_mesh_data(gltf, prim);
+
+    if(mesh.value.vertices[0].tangent_bitangent_sign == glm::vec4(0.0f)) {
+        compute_tangents(mesh.value);
+    }
+
+    return SceneObject(std::make_shared<StaticMesh>(mesh.value), std::make_shared<Material>(Material::point_light_material()));
+}
+
+Result<std::unique_ptr<Scene>> Scene::from_gltf(const std::string& file_name, const std::string& light_file_name) {
     const double time = program_time();
     DEFER(std::cout << file_name << " loaded in " << std::round((program_time() - time) * 100.0) / 100.0 << "s" << std::endl);
 
@@ -316,7 +372,9 @@ Result<std::unique_ptr<Scene>> Scene::from_gltf(const std::string& file_name) {
 
     std::cout << file_name << " parsed in " << std::round((program_time() - time) * 100.0) / 100.0 << "s" << std::endl;
 
-    auto scene = std::make_unique<Scene>();
+    // Light volume object
+    SceneObject light_volume = create_light_volume_object(light_file_name);
+    auto scene = std::make_unique<Scene>(light_volume);
 
     std::unordered_map<int, std::shared_ptr<Texture>> textures;
     std::unordered_map<int, std::shared_ptr<Material>> materials;

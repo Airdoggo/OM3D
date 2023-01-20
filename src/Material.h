@@ -13,6 +13,7 @@ enum class BlendMode {
     NoBlendNoCulling,
     None,
     Alpha,
+    Additive,
 };
 
 enum class DepthTestMode {
@@ -21,6 +22,7 @@ enum class DepthTestMode {
     Equal,
     None,
     Xor,
+    ReversedFrontCull,
 };
 
 class Material {

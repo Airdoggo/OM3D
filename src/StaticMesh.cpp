@@ -80,4 +80,16 @@ void StaticMesh::draw(int nb_instances) const {
     glDrawElementsInstanced(GL_TRIANGLES, int(_index_buffer.element_count()), GL_UNSIGNED_INT, nullptr, nb_instances);
 }
 
+void StaticMesh::draw_light_volume() const {
+    _vertex_buffer.bind(BufferUsage::Attribute);
+    _index_buffer.bind(BufferUsage::Index);
+
+    // Vertex position
+    glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(Vertex), nullptr);
+
+    glEnableVertexAttribArray(0);
+
+    glDrawElements(GL_TRIANGLES, int(_index_buffer.element_count()), GL_UNSIGNED_INT, nullptr);
+}
+
 }

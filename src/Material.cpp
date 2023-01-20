@@ -53,6 +53,11 @@ void Material::bind() const {
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glDisable(GL_CULL_FACE);
         break;
+
+        case BlendMode::Additive:
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_ONE, GL_ONE);
+        break;
     }
 
     switch(_depth_test_mode) {
@@ -81,6 +86,15 @@ void Material::bind() const {
             glEnable(GL_DEPTH_TEST);
             // We are using reverse-Z
             glDepthFunc(GL_NOTEQUAL);
+        break;
+
+        case DepthTestMode::ReversedFrontCull:
+            glEnable(GL_DEPTH_TEST);
+            // We are using reverse-Z
+            glDepthFunc(GL_LEQUAL);
+            glEnable(GL_CULL_FACE);
+            glCullFace(GL_FRONT);
+            glFrontFace(GL_CCW);
         break;
     }
 
@@ -133,7 +147,10 @@ Material Material::sun_light_material() {
 
 Material Material::point_light_material() {
     Material material;
-    material._program = Program::from_files("point_light.frag", "screen.vert");
+    material.set_blend_mode(BlendMode::Additive);
+    material.set_write_z_buffer(false);
+    material.set_depth_test_mode(DepthTestMode::ReversedFrontCull);
+    material._program = Program::from_files("point_light.frag", "light.vert");
     return material;
 }
 
