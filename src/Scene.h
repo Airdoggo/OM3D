@@ -11,6 +11,11 @@
 
 namespace OM3D {
 
+struct RenderInfo {
+    size_t objects = 0;
+    size_t rendered = 0;
+};
+
 class Scene : NonMovable {
 
     public:
@@ -21,13 +26,15 @@ class Scene : NonMovable {
 
         void update_frame(const Camera& camera);
 
-        void render(const Camera& camera) const;
+        void render(const Camera& camera);
         void compute_lights(const Camera& camera) const;
 
         void add_object(SceneObject obj);
         void add_object(PointLight obj);
 
         void set_screen_size_uniform(glm::uvec2 window_size);
+
+        const RenderInfo &get_render_info() const;
 
     private:
         std::vector<std::vector<SceneObject>> _objects;
@@ -40,6 +47,7 @@ class Scene : NonMovable {
         TypedBuffer<shader::FrameData> _buffer = TypedBuffer<shader::FrameData>(nullptr, 1);
         Frustum _frustum;
         glm::vec3 _camera_position;
+        RenderInfo _render_info;
 };
 
 }

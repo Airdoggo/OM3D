@@ -108,7 +108,7 @@ std::unique_ptr<Scene> create_default_scene() {
     auto scene = std::make_unique<Scene>();
 
     // Load default cube model
-    auto result = Scene::from_gltf(std::string(data_path) + "forest.glb", std::string(data_path) + "sphere.glb");
+    auto result = Scene::from_gltf(std::string(data_path) + "forest_huge.glb", std::string(data_path) + "sphere.glb");
     ALWAYS_ASSERT(result.is_ok, "Unable to load default scene");
     scene = std::move(result.value);
 
@@ -235,6 +235,9 @@ int main(int, char**) {
         {
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
                     ImGui::GetIO().Framerate);
+
+            const RenderInfo &info = scene->get_render_info();
+            ImGui::Text("Number of objects: %i\n Number of culled objects: %i", info.objects, info.objects - info.rendered);
 
             char buffer[1024] = {};
             if(ImGui::InputText("Load scene", buffer, sizeof(buffer), ImGuiInputTextFlags_EnterReturnsTrue)) {

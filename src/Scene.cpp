@@ -22,6 +22,8 @@ namespace OM3D
 
     void Scene::add_object(SceneObject obj)
     {
+        _render_info.objects++;
+
         for (auto &v : _objects)
         {
             if (obj == v.front())
@@ -79,9 +81,11 @@ namespace OM3D
         return true;
     }
 
-    void Scene::render(const Camera &camera) const
+    void Scene::render(const Camera &camera)
     {
         _buffer.bind(BufferUsage::Uniform, 0);
+
+        _render_info.rendered = 0;
 
         // Render every object
         for (auto &v : _objects)
@@ -91,8 +95,10 @@ namespace OM3D
             {
                 for (const auto &o : v)
                 {
-                    if (frustum_cull(o, _frustum, _camera_position))
+                    if (frustum_cull(o, _frustum, _camera_position)) {
                         o.render();
+                        _render_info.rendered++;
+                    }
                 }
 
                 continue;
@@ -111,6 +117,7 @@ namespace OM3D
                         mapping[i++] = {
                             obj.transform(),
                         };
+                        _render_info.rendered++;
                     }
                 }
             }
@@ -158,6 +165,10 @@ namespace OM3D
 
     void Scene::set_screen_size_uniform(glm::uvec2 window_size) {
         _light_volume.get_material()->set_uniform(HASH("screen_size"), window_size);
+    }
+
+    const RenderInfo &Scene::get_render_info() const {
+        return _render_info;
     }
 
 }
