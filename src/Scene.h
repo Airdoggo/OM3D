@@ -22,6 +22,7 @@ class Scene : NonMovable {
 
         void render(const Camera& camera) const;
         void compute_lights(const Camera& camera, const Material &sun_light_material, const Material &point_light_material) const;
+        void compute_occlusion_query(const Camera& camera);
 
         void add_object(SceneObject obj);
         void add_object(PointLight obj);

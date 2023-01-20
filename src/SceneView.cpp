@@ -25,6 +25,11 @@ void SceneView::compute_lights(const Material &sun_light_material, const Materia
     }
 }
 
+void SceneView::compute_occlusion_query()
+{
+    _scene->compute_occlusion_query(_camera);
+}
+
 void SceneView::sort_front_to_back()
 {
     _scene->sort_front_to_back(_camera);

@@ -78,12 +78,32 @@ namespace OM3D
         return true;
     }
 
-    bool compute_occlusion_query(const SceneObject& obj, OcclusionQuery occlusion_query) {
-        occlusion_query.beginQuery();
-        obj.render();
-        occlusion_query.endQuery();
-        
-        return occlusion_query.anySamplesPassed();
+    void Scene::compute_occlusion_query(const Camera& camera) {
+        TypedBuffer<shader::FrameData> buffer(nullptr, 1);
+        {
+            auto mapping = buffer.map(AccessType::WriteOnly);
+            mapping[0].camera.view_proj = camera.view_proj_matrix();
+            mapping[0].point_light_count = u32(_point_lights.size());
+            mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
+            mapping[0].sun_dir = glm::normalize(_sun_direction);
+        }
+        buffer.bind(BufferUsage::Uniform, 0);
+        // Disable writing to frame and depth buffer
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        glDepthMask(GL_FALSE);
+
+        for (auto& v : _objects) {
+            for (SceneObject& obj : v) {
+                occlusion_query.beginQuery();
+                obj.render();
+                occlusion_query.endQuery();
+                obj.is_visible = occlusion_query.anySamplesPassed();
+            }
+        }
+
+        // Enable writing to frame and depth buffer
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glDepthMask(GL_TRUE);
     }
 
     void Scene::render(const Camera &camera) const
@@ -139,7 +159,7 @@ namespace OM3D
                 auto mapping = object_buffer.map(AccessType::WriteOnly);
                 for (const SceneObject &obj : v)
                 {
-                    if (compute_occlusion_query(obj, occlusion_query))
+                    if (obj.is_visible)
                     {
                         mapping[i++] = {
                             obj.transform(),
@@ -149,10 +169,6 @@ namespace OM3D
             }
             // std::cout << "visible: " << i << std::endl;
             object_buffer.bind(BufferUsage::Storage, 2);
-
-            // Enable writing to frame and depth buffer
-            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-            glDepthMask(GL_TRUE);
 
             // Render every instance of this object
             v.front().render(int(i));

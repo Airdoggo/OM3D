@@ -15,6 +15,7 @@ class SceneView {
 
         void render() const;
         void compute_lights(const Material &sun_light_material, const Material &point_light_material) const;
+        void compute_occlusion_query();
         void sort_front_to_back();
 
     private:

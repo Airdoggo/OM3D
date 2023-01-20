@@ -191,6 +191,7 @@ int main(int, char**) {
         // Render the scene
         {
             g_buffer.bind();
+            scene_view.compute_occlusion_query();
             scene_view.render();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }

@@ -24,6 +24,7 @@ class SceneObject : NonCopyable {
         const BoundingSphere &get_bounding_sphere() const;
         const std::shared_ptr<Material> &get_material() const;
 
+        bool is_visible = false;
         bool operator==(const SceneObject& other) const;
 
     private:
