@@ -16,6 +16,7 @@ class SceneObject : NonCopyable {
         SceneObject(std::shared_ptr<StaticMesh> mesh = nullptr, std::shared_ptr<Material> material = nullptr);
 
         void render() const;
+        void render_bbox() const;
         void render(int nb_instances) const;
 
         void set_transform(const glm::mat4& tr);
@@ -32,6 +33,7 @@ class SceneObject : NonCopyable {
 
         std::shared_ptr<StaticMesh> _mesh;
         std::shared_ptr<Material> _material;
+        std::shared_ptr<StaticMesh> _bb_mesh;
 };
 
 }

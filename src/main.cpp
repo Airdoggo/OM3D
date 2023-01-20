@@ -166,6 +166,7 @@ int main(int, char**) {
     Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
     Framebuffer g_buffer(&depth, std::array{&albedo, &normals});
     Framebuffer shading_buffer(&depth, std::array{&lit});
+    Framebuffer bb_buffer(&depth, std::array{&albedo});
 
     Material debug_material = Material::debug_material();
     Material sun_light_material = Material::sun_light_material();
@@ -190,8 +191,9 @@ int main(int, char**) {
 
         // Render the scene
         {
-            g_buffer.bind();
+            bb_buffer.bind();
             scene_view.compute_occlusion_query();
+            g_buffer.bind();
             scene_view.render();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }

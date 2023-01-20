@@ -34,6 +34,7 @@ class StaticMesh : NonCopyable {
         bool operator==(const StaticMesh& other) const;
 
         BoundingSphere _bounding_sphere;
+        MeshData _data;
 
     private:
         TypedBuffer<Vertex> _vertex_buffer;

@@ -39,11 +39,11 @@ namespace OM3D
         _point_lights.emplace_back(std::move(obj));
     }
 
-    void Scene::sort_front_to_back(const Camera& camera)
+    void Scene::sort_front_to_back(const glm::vec3& camera_pos)
     {
         for (auto& v : _objects)
         {
-            std::sort(v.begin(), v.end(), front_to_back(camera));
+            std::sort(v.begin(), v.end(), front_to_back(camera_pos));
         }
     }
 
@@ -95,7 +95,7 @@ namespace OM3D
         for (auto& v : _objects) {
             for (SceneObject& obj : v) {
                 occlusion_query.beginQuery();
-                obj.render();
+                obj.render_bbox();
                 occlusion_query.endQuery();
                 obj.is_visible = occlusion_query.anySamplesPassed();
             }
@@ -145,7 +145,7 @@ namespace OM3D
             {
                 for (const auto &o : v)
                 {
-                    if (frustum_cull(o, frustum, camera_pos))
+                    if (frustum_cull(o, frustum, camera_pos) && o.is_visible)
                         o.render();
                 }
 

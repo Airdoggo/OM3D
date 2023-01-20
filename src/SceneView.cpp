@@ -32,7 +32,7 @@ void SceneView::compute_occlusion_query()
 
 void SceneView::sort_front_to_back()
 {
-    _scene->sort_front_to_back(_camera);
+    _scene->sort_front_to_back(_camera.position());
 }
 
 }
