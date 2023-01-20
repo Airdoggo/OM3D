@@ -30,7 +30,26 @@ void SceneObject::render(int nb_instances) const {
     _mesh->draw(nb_instances);
 }
 
-void SceneObject::set_transform(const glm::mat4& tr) {
+void SceneObject::render_light_volume(const glm::vec3 &position, float radius, const glm::vec3 &color) const {
+    if (!_material || !_mesh)
+    {
+        return;
+    }
+
+    _material->bind();
+    _material->set_uniform(HASH("light.position"), position);
+    _material->set_uniform(HASH("light.radius"), radius);
+    _material->set_uniform(HASH("light.color"), color);
+
+    glm::mat4 transform = {radius, 0., 0., 0.,
+                            0., radius, 0., 0.,
+                            0., 0., radius, 0.,
+                            position.x, position.y, position.z, 1.};
+    _material->set_uniform(HASH("model"), transform);
+    _mesh->draw_light_volume();
+}
+
+void SceneObject::set_transform(const glm::mat4 &tr) {
     _transform = tr;
 }
 
@@ -38,11 +57,11 @@ const glm::mat4& SceneObject::transform() const {
     return _transform;
 }
 
-const BoundingSphere &SceneObject::get_bounding_sphere() const {
+const BoundingSphere& SceneObject::get_bounding_sphere() const {
     return _mesh->_bounding_sphere;
 }
 
-const std::shared_ptr<Material> &SceneObject::get_material() const {
+const std::shared_ptr<Material>& SceneObject::get_material() const {
     return _material;
 }
 

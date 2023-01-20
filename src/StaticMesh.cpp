@@ -84,4 +84,17 @@ bool StaticMesh::operator==(const StaticMesh& other) const {
     return _vertex_buffer.element_count() == other._vertex_buffer.element_count()
         && _index_buffer.element_count() == other._index_buffer.element_count();
 }
+
+void StaticMesh::draw_light_volume() const {
+    _vertex_buffer.bind(BufferUsage::Attribute);
+    _index_buffer.bind(BufferUsage::Index);
+
+    // Vertex position
+    glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(Vertex), nullptr);
+
+    glEnableVertexAttribArray(0);
+
+    glDrawElements(GL_TRIANGLES, int(_index_buffer.element_count()), GL_UNSIGNED_INT, nullptr);
+}
+
 }

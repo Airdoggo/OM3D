@@ -304,4 +304,21 @@ void ImGuiRenderer::render(const ImDrawData* draw_data) {
     }
 }
 
+void ImGuiRenderer::display_debug_mode() {
+    if (ImGui::BeginCombo("Debug View", debug_views[debug_mode], 0))
+    {
+        for (int n = 0; n < 4; n++)
+        {
+            const bool is_selected = (debug_mode == n);
+            if (ImGui::Selectable(debug_views[n], is_selected)) {
+                debug_mode = n;
+            }
+
+            if (is_selected)
+                ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+}
+
 }

@@ -1,16 +1,23 @@
 #include "Scene.h"
 
-#include <TypedBuffer.h>
+#include <glad/glad.h>
 
-#include <shader_structs.h>
+#include <TypedBuffer.h>
 
 #include <iostream>
 
 namespace OM3D
 {
-
     Scene::Scene()
+    {}
+
+    Scene::Scene(SceneObject &light_volume)
+    : _light_volume(std::move(light_volume))
     {
+        auto mapping = _buffer.map(AccessType::WriteOnly);
+        mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
+        mapping[0].point_light_count = (glm::uint)_point_lights.size();
+        mapping[0].sun_dir = glm::normalize(_sun_direction);
     }
 
     void Scene::add_object(SceneObject obj)
@@ -31,6 +38,14 @@ namespace OM3D
     void Scene::add_object(PointLight obj)
     {
         _point_lights.emplace_back(std::move(obj));
+    }
+
+    void Scene::update_frame(const Camera& camera) {
+        auto mapping = _buffer.map(AccessType::WriteOnly);
+        mapping[0].camera.view_proj = camera.view_proj_matrix();
+
+        _frustum = camera.build_frustum();
+        _camera_position = camera.position();
     }
 
     bool frustum_cull(const SceneObject &obj, const Frustum &frustum, const glm::vec3 &camera)
@@ -66,35 +81,7 @@ namespace OM3D
 
     void Scene::render(const Camera &camera) const
     {
-        // Fill and bind frame data buffer
-        TypedBuffer<shader::FrameData> buffer(nullptr, 1);
-        {
-            auto mapping = buffer.map(AccessType::WriteOnly);
-            mapping[0].camera.view_proj = camera.view_proj_matrix();
-            mapping[0].point_light_count = u32(_point_lights.size());
-            mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
-            mapping[0].sun_dir = glm::normalize(_sun_direction);
-        }
-        buffer.bind(BufferUsage::Uniform, 0);
-
-        // Fill and bind lights buffer
-        TypedBuffer<shader::PointLight> light_buffer(nullptr, std::max(_point_lights.size(), size_t(1)));
-        {
-            auto mapping = light_buffer.map(AccessType::WriteOnly);
-            for (size_t i = 0; i != _point_lights.size(); ++i)
-            {
-                const auto &light = _point_lights[i];
-                mapping[i] = {
-                    light.position(),
-                    light.radius(),
-                    light.color(),
-                    0.0f};
-            }
-        }
-        light_buffer.bind(BufferUsage::Storage, 1);
-
-        Frustum frustum = camera.build_frustum();
-        glm::vec3 camera_pos = camera.position();
+        _buffer.bind(BufferUsage::Uniform, 0);
 
         // Render every object
         for (auto &v : _objects)
@@ -104,7 +91,7 @@ namespace OM3D
             {
                 for (const auto &o : v)
                 {
-                    if (frustum_cull(o, frustum, camera_pos))
+                    if (frustum_cull(o, _frustum, _camera_position))
                         o.render();
                 }
 
@@ -119,7 +106,7 @@ namespace OM3D
                 auto mapping = object_buffer.map(AccessType::WriteOnly);
                 for (const SceneObject &obj : v)
                 {
-                    if (frustum_cull(obj, frustum, camera_pos))
+                    if (frustum_cull(obj, _frustum, _camera_position))
                     {
                         mapping[i++] = {
                             obj.transform(),
@@ -132,6 +119,45 @@ namespace OM3D
             // Render every instance of this object
             v.front().render(int(i));
         }
+    }
+
+    bool frustum_cull_light(const PointLight &light, const Frustum &frustum, const glm::vec3 &camera)
+    {
+        const glm::vec3 &position = light.position();
+        float radius = light.radius();
+
+        // Check against every plane
+        if (glm::dot(position + frustum._left_normal * radius - camera, frustum._left_normal) <= 0)
+            return false;
+        if (glm::dot(position + frustum._right_normal * radius - camera, frustum._right_normal) <= 0)
+            return false;
+        if (glm::dot(position + frustum._near_normal * radius - camera, frustum._near_normal) <= 0)
+            return false;
+        if (glm::dot(position + frustum._top_normal * radius - camera, frustum._top_normal) <= 0)
+            return false;
+        if (glm::dot(position + frustum._bottom_normal * radius - camera, frustum._bottom_normal) <= 0)
+            return false;
+
+        return true;
+    }
+
+    void Scene::compute_lights(const Camera& camera) const {
+
+        _buffer.bind(BufferUsage::Uniform, 0);
+        
+        _sun_material.bind();
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        
+        _light_volume.get_material()->set_uniform(HASH("inv_viewproj"), glm::inverse(camera.view_proj_matrix()));
+
+        for (auto &pl : _point_lights) {
+            if (frustum_cull_light(pl, _frustum, _camera_position))
+                _light_volume.render_light_volume(pl.position(), pl.radius(), pl.color());
+        }
+    }
+
+    void Scene::set_screen_size_uniform(glm::uvec2 window_size) {
+        _light_volume.get_material()->set_uniform(HASH("screen_size"), window_size);
     }
 
 }

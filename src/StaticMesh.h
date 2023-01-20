@@ -30,6 +30,7 @@ class StaticMesh : NonCopyable {
 
         void draw() const;
         void draw(int nb_instances) const;
+        void draw_light_volume() const;
 
         bool operator==(const StaticMesh& other) const;
 

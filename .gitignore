@@ -1,3 +1,4 @@
 build/
 */*.glb
 *.user
+.vscode/

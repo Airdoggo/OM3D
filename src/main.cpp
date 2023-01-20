@@ -108,23 +108,30 @@ std::unique_ptr<Scene> create_default_scene() {
     auto scene = std::make_unique<Scene>();
 
     // Load default cube model
-    auto result = Scene::from_gltf(std::string(data_path) + "forest_huge.glb");
+    auto result = Scene::from_gltf(std::string(data_path) + "forest.glb", std::string(data_path) + "sphere.glb");
     ALWAYS_ASSERT(result.is_ok, "Unable to load default scene");
     scene = std::move(result.value);
 
     // Add lights
     {
         PointLight light;
-        light.set_position(glm::vec3(1.0f, 2.0f, 4.0f));
+        light.set_position(glm::vec3(-100.0f, 2.0f, 300.0f));
         light.set_color(glm::vec3(0.0f, 10.0f, 0.0f));
+        light.set_radius(200.0f);
+        scene->add_object(std::move(light));
+    }
+    {
+        PointLight light;
+        light.set_position(glm::vec3(30.0f, 2.0f, 0.0f));
+        light.set_color(glm::vec3(10.0f, 0.0f, 0.0f));
         light.set_radius(100.0f);
         scene->add_object(std::move(light));
     }
     {
         PointLight light;
-        light.set_position(glm::vec3(1.0f, 2.0f, -4.0f));
-        light.set_color(glm::vec3(10.0f, 0.0f, 0.0f));
-        light.set_radius(50.0f);
+        light.set_position(glm::vec3(30.0f, 2.0f, 0.0f));
+        light.set_color(glm::vec3(0.0f, 0.0f, 10.0f));
+        light.set_radius(100.0f);
         scene->add_object(std::move(light));
     }
 
@@ -157,11 +164,19 @@ int main(int, char**) {
 
     auto tonemap_program = Program::from_file("tonemap.comp");
 
-    Texture depth(window_size, ImageFormat::Depth32_FLOAT);
+    Texture albedo(window_size, ImageFormat::RGB8_sRGB);
+	Texture normals(window_size, ImageFormat::RGBA8_UNORM);
+	Texture depth(window_size, ImageFormat::Depth32_FLOAT);
     Texture lit(window_size, ImageFormat::RGBA16_FLOAT);
     Texture color(window_size, ImageFormat::RGBA8_UNORM);
-    Framebuffer main_framebuffer(&depth, std::array{&lit});
+
     Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
+    Framebuffer g_buffer(&depth, std::array{&albedo, &normals});
+    Framebuffer shading_buffer(&depth, std::array{&lit});
+
+    Material debug_material = Material::debug_material();
+
+    scene->set_screen_size_uniform(window_size);
 
     for(;;) {
         glfwPollEvents();
@@ -176,11 +191,33 @@ int main(int, char**) {
             process_inputs(window, scene_view.camera());
         }
 
+        // Update the frame data
+        scene_view.update_frame();
+
         // Render the scene
         {
-            main_framebuffer.bind();
+            g_buffer.bind();
             scene_view.render();
         }
+
+        // Set the textures as input
+        shading_buffer.bind(true, false); // Clear color but not Z buffer
+        albedo.bind(0);
+        normals.bind(1);
+        depth.bind(2);
+
+        if (imgui.debug_mode) // Debug view
+        {
+            debug_material.bind();
+
+            if (imgui.debug_mode == 3) // Allow background fragments to be modified for Depth view
+                glDepthFunc(GL_LEQUAL);
+
+            debug_material.set_uniform(HASH("debug"), imgui.debug_mode);
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+        }
+        else // Screen-space light calculations
+            scene_view.compute_lights();
 
         // Apply a tonemap in compute shader
         {
@@ -201,7 +238,7 @@ int main(int, char**) {
 
             char buffer[1024] = {};
             if(ImGui::InputText("Load scene", buffer, sizeof(buffer), ImGuiInputTextFlags_EnterReturnsTrue)) {
-                auto result = Scene::from_gltf(buffer);
+                auto result = Scene::from_gltf(buffer, std::string(data_path) + "sphere.glb");
                 if(!result.is_ok) {
                     std::cerr << "Unable to load scene (" << buffer << ")" << std::endl;
                 } else {
@@ -209,6 +246,9 @@ int main(int, char**) {
                     scene_view = SceneView(scene.get());
                 }
             }
+
+            //imgui.load_existing_scene();
+            imgui.display_debug_mode();
         }
         imgui.finish();
 
