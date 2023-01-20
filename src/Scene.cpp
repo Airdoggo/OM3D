@@ -22,7 +22,7 @@ namespace OM3D
     {
         for (auto &v : _objects)
         {
-            if (obj.get_material().get() == v.front().get_material().get())
+            if (obj == v.front())
             {
                 v.emplace_back(std::move(obj));
                 return;
@@ -118,21 +118,19 @@ namespace OM3D
         glm::vec3 camera_pos = camera.position();
 
         // Render every object
-        /*for (const auto &p : _objects)
-        {
-            for (const auto &o : p)
-            {
-                if (frustum_cull(o, frustum, camera_pos))
-                    o.render();
-            }
-        }
-        return;*/
-
         for (auto &v : _objects)
         {
-            // Disable writing to frame and depth buffer
-            // glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-            glDepthMask(GL_FALSE);
+            // If there are not enough objects, the instancing overhead is too big and performances are lower
+            if (v.size() < 50)
+            {
+                for (const auto &o : v)
+                {
+                    if (frustum_cull(o, frustum, camera_pos))
+                        o.render();
+                }
+
+                continue;
+            }
 
             size_t i = 0;
             // Fill and bind objects buffer

@@ -17,6 +17,7 @@ void SceneObject::render() const {
     uint32_t instancing = 0;
     _material->set_uniform(HASH("instancing"), instancing);
     _material->set_uniform(HASH("model"), transform());
+    _material->set_uniform(HASH("instanced"), 0u);
     _material->bind();
     _mesh->draw();
 }
@@ -25,8 +26,8 @@ void SceneObject::render(int nb_instances) const {
     if(!_material || !_mesh) {
         return;
     }
-    uint32_t instancing = 1;
-    _material->set_uniform(HASH("instancing"), instancing);
+
+    _material->set_uniform(HASH("instanced"), 1u);
     _material->bind();
     _mesh->draw(nb_instances);
 }
@@ -45,6 +46,10 @@ const BoundingSphere &SceneObject::get_bounding_sphere() const {
 
 const std::shared_ptr<Material> &SceneObject::get_material() const {
     return _material;
+}
+
+bool SceneObject::operator==(const SceneObject& other) const {
+    return _material.get() == other._material.get() && *_mesh.get() == *other._mesh.get();
 }
 
 }
