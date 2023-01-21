@@ -27,6 +27,9 @@ class SceneObject : NonCopyable {
 
         bool operator==(const SceneObject& other) const;
 
+        // Instanciation ID to sort objects during frustum culling
+        size_t id = 0;
+
     private:
         glm::mat4 _transform = glm::mat4(1.0f);
 

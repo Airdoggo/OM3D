@@ -24,15 +24,19 @@ namespace OM3D
     {
         _render_info.objects++;
 
-        for (auto &v : _objects)
+        for (size_t i = 0; i < _objects.size(); i++)
         {
-            if (obj == v.front())
+            if (obj == _objects[i].front())
             {
-                v.emplace_back(std::move(obj));
+                obj.id = i;
+                _objects[i].emplace_back(std::move(obj));
                 return;
             }
         }
 
+        _nb_different_objects++;
+
+        obj.id = _objects.size();
         _objects.emplace_back(std::vector<SceneObject>());
         _objects.back().emplace_back(std::move(obj));
     }
@@ -63,45 +67,13 @@ namespace OM3D
         _frustum = camera.build_frustum();
     }
 
-    bool frustum_cull(const SceneObject &obj, const Frustum &frustum)
-    {
-        return true;
-        //const BoundingSphere &s = obj.get_bounding_sphere();
-
-        // Get the real position of the object
-        const glm::mat4 &t = obj.transform();
-        const glm::vec3 pos = glm::vec3(t[3].x, t[3].y, t[3].z);// + obj.get_bounding_sphere().origin;
-
-        // Scale the bounding sphere
-        float scaleX = glm::length(t[0]);
-        float scaleY = glm::length(t[1]);
-        float scaleZ = glm::length(t[2]);
-
-        float max_scale = scaleX > scaleY ? (scaleX > scaleZ ? scaleX : scaleZ) : (scaleZ > scaleY ? scaleZ : scaleY);
-        float radius = 1;//s.radius * max_scale;
-
-        // Check against every plane
-        if (glm::dot(pos + frustum._left_normal * radius - frustum._position, frustum._left_normal) <= 0)
-            return false;
-        if (glm::dot(pos + frustum._right_normal * radius - frustum._position, frustum._right_normal) <= 0)
-            return false;
-        if (glm::dot(pos + frustum._near_normal * radius - frustum._position, frustum._near_normal) <= 0)
-            return false;
-        if (glm::dot(pos + frustum._top_normal * radius - frustum._position, frustum._top_normal) <= 0)
-            return false;
-        if (glm::dot(pos + frustum._bottom_normal * radius - frustum._position, frustum._bottom_normal) <= 0)
-            return false;
-
-        return true;
-    }
-
     void Scene::render(const Camera &camera)
     {
         _buffer.bind(BufferUsage::Uniform, 0);
 
         _render_info.rendered = 0;
 
-        auto objects = std::vector<std::vector<const SceneObject *>>(1);
+        auto objects = std::vector<std::vector<const SceneObject *>>(_nb_different_objects);
 
         _bounding_tree.frustum_cull(objects, _frustum);
 
@@ -109,7 +81,7 @@ namespace OM3D
         for (auto &v : objects)
         {
             // If there are not enough objects, the instancing overhead is too big and performances are lower
-            if (v.size() < 50 || true)
+            if (v.size() < 50)
             {
                 for (const auto &o : v)
                 {
@@ -128,13 +100,10 @@ namespace OM3D
                 auto mapping = object_buffer.map(AccessType::WriteOnly);
                 for (const SceneObject *obj : v)
                 {
-                    if (frustum_cull(*obj, _frustum))
-                    {
-                        mapping[i++] = {
-                            obj->transform(),
-                        };
-                        _render_info.rendered++;
-                    }
+                    mapping[i++] = {
+                        obj->transform(),
+                    };
+                    _render_info.rendered++;
                 }
             }
             object_buffer.bind(BufferUsage::Storage, 2);

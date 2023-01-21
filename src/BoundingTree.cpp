@@ -46,7 +46,7 @@ void BoundingTree::frustum_cull(std::vector<std::vector<const SceneObject *>> &o
         return;
     
     if (_children.empty()) {
-        objects[/*_object->id*/0].push_back(_object);
+        objects[_object->id].push_back(_object);
         return;
     }
 

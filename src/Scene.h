@@ -47,6 +47,7 @@ class Scene : NonMovable {
         glm::vec3 _sun_direction = glm::vec3(0.2f, 1.0f, 0.1f);
 
         BoundingTree _bounding_tree;
+        size_t _nb_different_objects = 0;
 
         // Updated each frame
         TypedBuffer<shader::FrameData> _buffer = TypedBuffer<shader::FrameData>(nullptr, 1);
