@@ -20,7 +20,7 @@ class Scene : NonMovable {
 
         static Result<std::unique_ptr<Scene>> from_gltf(const std::string& file_name);
 
-        void render(const Camera& camera) const;
+        void render(const Camera& camera);
         void compute_lights(const Camera& camera, const Material &sun_light_material, const Material &point_light_material) const;
         void compute_occlusion_query(const Camera& camera);
 

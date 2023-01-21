@@ -106,7 +106,7 @@ namespace OM3D
         glDepthMask(GL_TRUE);
     }
 
-    void Scene::render(const Camera &camera) const
+    void Scene::render(const Camera &camera)
     {
         TypedBuffer<shader::FrameData> buffer(nullptr, 1);
         {
@@ -143,10 +143,31 @@ namespace OM3D
             // If there are not enough objects, the instancing overhead is too big and performances are lower
             if (v.size() < 50)
             {
-                for (const auto &o : v)
+                for (auto &o : v)
                 {
-                    if (frustum_cull(o, frustum, camera_pos) && o.is_visible)
+                    if (!frustum_cull(o, frustum, camera_pos)) {
+                        o.is_visible = false;
+                        continue;
+                    }
+                    if (o.is_visible)
+                    {
+                        occlusion_query.beginQuery();
                         o.render();
+                        occlusion_query.endQuery();
+                        o.is_visible = occlusion_query.anySamplesPassed();
+                    }
+                    else {
+                        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+                        glDepthMask(GL_FALSE);
+
+                        occlusion_query.beginQuery();
+                        o.render_bbox();
+                        occlusion_query.endQuery();
+                        o.is_visible = occlusion_query.anySamplesPassed();
+
+                        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+                        glDepthMask(GL_TRUE);
+                    }
                 }
 
                 continue;

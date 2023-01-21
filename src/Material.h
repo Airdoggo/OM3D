@@ -47,7 +47,6 @@ class Material {
         static Material debug_material();
         static Material sun_light_material();
         static Material point_light_material();
-        static Material bbox_material();
 
     private:
         std::shared_ptr<Program> _program;
