@@ -20,17 +20,7 @@ namespace OM3D
 
     void Scene::add_object(SceneObject obj)
     {
-        for (auto& v : _objects)
-        {
-            if (obj == v.front())
-            {
-                v.emplace_back(std::move(obj));
-                return;
-            }
-        }
-
-        _objects.emplace_back(std::vector<SceneObject>());
-        _objects.back().emplace_back(std::move(obj));
+        _objects.emplace_back(std::move(obj));
     }
 
 
@@ -41,10 +31,7 @@ namespace OM3D
 
     void Scene::sort_front_to_back(const glm::vec3& camera_pos)
     {
-        for (auto& v : _objects)
-        {
-            std::sort(v.begin(), v.end(), front_to_back(camera_pos));
-        }
+        std::sort(_objects.begin(), _objects.end(), front_to_back(camera_pos));
     }
 
     bool frustum_cull(const SceneObject& obj, const Frustum& frustum, const glm::vec3& camera)
@@ -92,13 +79,11 @@ namespace OM3D
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
         glDepthMask(GL_FALSE);
 
-        for (auto& v : _objects) {
-            for (SceneObject& obj : v) {
-                occlusion_query.beginQuery();
-                obj.render_bbox();
-                occlusion_query.endQuery();
-                obj.is_visible = occlusion_query.anySamplesPassed();
-            }
+        for (SceneObject& obj : _objects) {
+            occlusion_query.beginQuery();
+            obj.render_bbox();
+            occlusion_query.endQuery();
+            obj.is_visible = occlusion_query.anySamplesPassed();
         }
 
         // Enable writing to frame and depth buffer
@@ -138,61 +123,31 @@ namespace OM3D
         glm::vec3 camera_pos = camera.position();
 
         // Render every object
-        for (auto& v : _objects)
+        for (auto& o : _objects)
         {
-            // If there are not enough objects, the instancing overhead is too big and performances are lower
-            if (v.size() < 50)
-            {
-                for (auto& o : v)
-                {
-                    if (!frustum_cull(o, frustum, camera_pos)) {
-                        o.is_visible = false;
-                        continue;
-                    }
-                    if (o.is_visible)
-                    {
-                        occlusion_query.beginQuery();
-                        o.render();
-                        occlusion_query.endQuery();
-                        o.is_visible = occlusion_query.anySamplesPassed();
-                    }
-                    else {
-                        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-                        glDepthMask(GL_FALSE);
-
-                        occlusion_query.beginQuery();
-                        o.render_bbox();
-                        occlusion_query.endQuery();
-                        o.is_visible = occlusion_query.anySamplesPassed();
-
-                        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-                        glDepthMask(GL_TRUE);
-                    }
-                }
-
+            if (!frustum_cull(o, frustum, camera_pos)) {
+                o.is_visible = false;
                 continue;
             }
-
-            size_t i = 0;
-            // Fill and bind objects buffer
-            TypedBuffer<shader::mat4> object_buffer(nullptr, std::max(v.size(), size_t(1)));
+            if (o.is_visible)
             {
-                auto mapping = object_buffer.map(AccessType::WriteOnly);
-                for (const SceneObject& obj : v)
-                {
-                    if (obj.is_visible)
-                    {
-                        mapping[i++] = {
-                            obj.transform(),
-                        };
-                    }
-                }
+                occlusion_query.beginQuery();
+                o.render();
+                occlusion_query.endQuery();
+                o.is_visible = occlusion_query.anySamplesPassed();
             }
-            // std::cout << "visible: " << i << std::endl;
-            object_buffer.bind(BufferUsage::Storage, 2);
+            else {
+                glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+                glDepthMask(GL_FALSE);
 
-            // Render every instance of this object
-            v.front().render(int(i));
+                occlusion_query.beginQuery();
+                o.render_bbox();
+                occlusion_query.endQuery();
+                o.is_visible = occlusion_query.anySamplesPassed();
+
+                glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+                glDepthMask(GL_TRUE);
+            }
         }
     }
 }
