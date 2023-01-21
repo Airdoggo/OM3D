@@ -1,17 +1,16 @@
 #include "BoundingTree.h"
 
 #include <algorithm>
-#include <iostream>
 
 namespace OM3D {
 
 BoundingTree::BoundingTree() {}
 
-BoundingTree::BoundingTree(const SceneObject &object)
-    : _object(&object)
+BoundingTree::BoundingTree(std::shared_ptr<SceneObject> object)
+    : _object(object)
     , _children(std::vector<BoundingTree>())
 {
-    auto aabb = object.get_aabb();
+    auto aabb = object->get_aabb();
     _min_corner = aabb.first;
     _max_corner = aabb.second;
 }
@@ -20,28 +19,8 @@ BoundingTree::BoundingTree(std::vector<BoundingTree> &children)
     : _object(nullptr)
     , _children(std::move(children))
 {
-    _min_corner = _children.front().get_min_corner();
-    _max_corner = _children.front().get_max_corner();
-
     // Fit new bounding box to children bounding boxes
-    for (size_t i = 1; i < _children.size(); i++) {
-        const glm::vec3 &min = _children[i].get_min_corner();
-        const glm::vec3 &max = _children[i].get_max_corner();
-
-        if (_min_corner.x > min.x)
-            _min_corner.x = min.x;
-        if (_min_corner.y > min.y)
-            _min_corner.y = min.y;
-        if (_min_corner.z > min.z)
-            _min_corner.z = min.z;
-
-        if (_max_corner.x < max.x)
-            _max_corner.x = max.x;
-        if (_max_corner.y < max.y)
-            _max_corner.y = max.y;
-        if (_max_corner.z < max.z)
-            _max_corner.z = max.z;
-    }
+    fit_children();
 }
 
 void BoundingTree::subdivise(size_t subdivisions) {
@@ -56,8 +35,8 @@ void BoundingTree::subdivise(size_t subdivisions) {
     
     // Compare the objects center relative to the longest axis of the current bounding tree
     auto cmp = [&](const BoundingTree &a, const BoundingTree &b) {
-        return (a.get_min_corner()[longest_axis] + a.get_max_corner()[longest_axis]) * 0.5
-             < (b.get_min_corner()[longest_axis] + b.get_max_corner()[longest_axis]) * 0.5;
+        return (a._min_corner[longest_axis] + a._max_corner[longest_axis]) * 0.5
+             < (b._min_corner[longest_axis] + b._max_corner[longest_axis]) * 0.5;
     };
 
     std::sort(_children.begin(), _children.end(), cmp);
@@ -86,12 +65,96 @@ void BoundingTree::subdivise(size_t subdivisions) {
     }
 }
 
-void BoundingTree::frustum_cull(std::vector<std::vector<const SceneObject *>> &objects, const Frustum &frustum, size_t &counter) const {
+bool BoundingTree::fit_children() {
+    glm::vec3 current_min = _min_corner;
+    glm::vec3 current_max = _max_corner;
+
+    _min_corner = _children.front()._min_corner;
+    _max_corner = _children.front()._max_corner;
+
+    for (size_t i = 1; i < _children.size(); i++) {
+        const glm::vec3 &min = _children[i]._min_corner;
+        const glm::vec3 &max = _children[i]._max_corner;
+
+        if (_min_corner.x > min.x)
+            _min_corner.x = min.x;
+        if (_min_corner.y > min.y)
+            _min_corner.y = min.y;
+        if (_min_corner.z > min.z)
+            _min_corner.z = min.z;
+
+        if (_max_corner.x < max.x)
+            _max_corner.x = max.x;
+        if (_max_corner.y < max.y)
+            _max_corner.y = max.y;
+        if (_max_corner.z < max.z)
+            _max_corner.z = max.z;
+    }
+
+    return _min_corner != current_min || _max_corner != current_max;
+}
+
+void BoundingTree::insert(BoundingTree &obj, size_t subdivision) {
+    
+}
+
+RemoveResult BoundingTree::remove(const std::shared_ptr<SceneObject> object) {
+    // Leaf, therefore object
+    if (_children.empty()) {
+        if (_object == object) {
+            return Delete;
+        }
+        return NotFound;
+    }
+
+    for (auto it = _children.begin(); it != _children.end(); it++) {
+        const glm::vec3 &min = it->_min_corner;
+        const glm::vec3 &max = it->_max_corner;
+
+        auto aabb = object->get_aabb();
+
+        // Check if children can contain object
+        if (min.x <= aabb.first.x && min.y <= aabb.first.y && min.z <= aabb.first.z
+            && max.x >= aabb.second.x && max.y >= aabb.second.y && max.z >= aabb.second.z) {
+
+            RemoveResult res = it->remove(object);
+            if (res == Delete) {
+                _children.erase(it);
+
+                // One child means this node is useless
+                if (_children.size() == 1) {
+
+                    auto &child = _children.front();
+
+                    _object = child._object;
+                    _min_corner = child._min_corner;
+                    _max_corner = child._max_corner;
+                    _children = std::vector<BoundingTree>(child._children);
+
+                    return Resize;
+                }
+
+                if (fit_children()) {
+                    return Resize;
+                }
+
+                return NotFound;
+            }
+            else if (res == Resize) {
+                return fit_children() ? Resize : NotFound;
+            }
+        }
+    }
+
+    return NotFound;
+}
+
+void BoundingTree::frustum_cull(std::vector<std::vector<std::shared_ptr<SceneObject>>> &objects, const Frustum &frustum, size_t &counter) const {
     counter++;
     if (frustum_cull_aabb(frustum))
         return;
     
-    if (_children.empty()) {
+    if (_children.empty() && _object) {
         objects[_object->id].push_back(_object);
         return;
     }
@@ -124,14 +187,6 @@ bool BoundingTree::frustum_cull_aabb_plane(const glm::vec3 &plane_normal, const 
     );
 
     return dot(plane_normal, far_vert - plane_position) <= 0;
-}
-
-const glm::vec3 &BoundingTree::get_min_corner() const {
-    return _min_corner;
-}
-
-const glm::vec3 &BoundingTree::get_max_corner() const {
-    return _max_corner;
 }
 
 }

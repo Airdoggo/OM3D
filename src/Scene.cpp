@@ -20,16 +20,18 @@ namespace OM3D
         mapping[0].sun_dir = glm::normalize(_sun_direction);
     }
 
-    void Scene::add_object(SceneObject obj)
+    void Scene::add_object(SceneObject obj, std::shared_ptr<SceneObject> *new_address)
     {
         _render_info.objects++;
 
         for (size_t i = 0; i < _objects.size(); i++)
         {
-            if (obj == _objects[i].front())
+            if (obj == *_objects[i].front())
             {
                 obj.id = i;
-                _objects[i].emplace_back(std::move(obj));
+                _objects[i].emplace_back(std::make_shared<SceneObject>(std::move(obj)));
+                if (new_address)
+                    *new_address = _objects[i].back();
                 return;
             }
         }
@@ -37,13 +39,33 @@ namespace OM3D
         _nb_different_objects++;
 
         obj.id = _objects.size();
-        _objects.emplace_back(std::vector<SceneObject>());
-        _objects.back().emplace_back(std::move(obj));
+        _objects.emplace_back(std::vector<std::shared_ptr<SceneObject>>());
+        _objects.back().emplace_back(std::make_shared<SceneObject>(std::move(obj)));
+        if (new_address)
+            *new_address = _objects.back().back();
     }
 
     void Scene::add_object(PointLight obj)
     {
         _point_lights.emplace_back(std::move(obj));
+    }
+
+    void Scene::dynamic_add_object(SceneObject obj, size_t subdivisions) {
+        std::shared_ptr<SceneObject> *new_object = nullptr;
+        add_object(std::move(obj), new_object);
+
+        BoundingTree new_leaf(*new_object);
+        _bounding_tree.insert(new_leaf, subdivisions);
+    }
+
+    void Scene::dynamic_remove_object(const std::shared_ptr<SceneObject> &object) {
+        if (_bounding_tree.remove(object) == Delete) {
+            _bounding_tree = BoundingTree();
+        }
+
+        auto &v = _objects[object->id];
+        v.erase(std::find(v.begin(), v.end(), object));
+        _render_info.objects--;
     }
 
     void Scene::create_bounding_volume_hierarchy(size_t subdivisions) {
@@ -76,7 +98,7 @@ namespace OM3D
         _render_info.rendered = 0;
         _render_info.checks = 0;
 
-        auto objects = std::vector<std::vector<const SceneObject *>>(_nb_different_objects);
+        auto objects = std::vector<std::vector<std::shared_ptr<SceneObject>>>(_nb_different_objects);
 
         _bounding_tree.frustum_cull(objects, _frustum, _render_info.checks);
 
@@ -101,7 +123,7 @@ namespace OM3D
             TypedBuffer<shader::mat4> object_buffer(nullptr, std::max(v.size(), size_t(1)));
             {
                 auto mapping = object_buffer.map(AccessType::WriteOnly);
-                for (const SceneObject *obj : v)
+                for (const std::shared_ptr<SceneObject> &obj : v)
                 {
                     mapping[i++] = {
                         obj->transform(),

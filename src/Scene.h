@@ -26,22 +26,25 @@ class Scene : NonMovable {
 
         static Result<std::unique_ptr<Scene>> from_gltf(const std::string& file_name, const std::string& light_file_name);
 
-        void create_bounding_volume_hierarchy(size_t subdivisions = 2);
+        void create_bounding_volume_hierarchy(size_t subdivisions = 4);
 
         void update_frame(const Camera& camera);
 
         void render(const Camera& camera);
         void compute_lights(const Camera& camera) const;
 
-        void add_object(SceneObject obj);
+        void add_object(SceneObject obj, std::shared_ptr<SceneObject> *object = nullptr);
         void add_object(PointLight obj);
+
+        void dynamic_add_object(SceneObject obj, size_t subdivisions = 4);
+        void dynamic_remove_object(const std::shared_ptr<SceneObject> &object);
 
         void set_screen_size_uniform(glm::uvec2 window_size);
 
         const RenderInfo &get_render_info() const;
 
     private:
-        std::vector<std::vector<SceneObject>> _objects;
+        std::vector<std::vector<std::shared_ptr<SceneObject>>> _objects;
         std::vector<PointLight> _point_lights;
         SceneObject _light_volume;
         Material _sun_material = Material::sun_light_material();

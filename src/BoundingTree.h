@@ -9,23 +9,30 @@
 
 namespace OM3D {
 
+enum RemoveResult {
+    NotFound,
+    Delete,
+    Resize,
+};
+
 class BoundingTree {
     public:
         BoundingTree();
-        BoundingTree(const SceneObject &object);
+        BoundingTree(std::shared_ptr<SceneObject> object);
         BoundingTree(std::vector<BoundingTree> &children);
 
         void subdivise(size_t subdivisions);
+        bool fit_children();
 
-        void frustum_cull(std::vector<std::vector<const SceneObject *>> &objects, const Frustum &frustum, size_t &counter) const;
+        void insert(BoundingTree &obj, size_t subdivision);
+        RemoveResult remove(const std::shared_ptr<SceneObject> object);
+
+        void frustum_cull(std::vector<std::vector<std::shared_ptr<SceneObject>>> &objects, const Frustum &frustum, size_t &counter) const;
         bool frustum_cull_aabb(const Frustum &frustum) const;
         bool frustum_cull_aabb_plane(const glm::vec3 &plane, const glm::vec3 &plane_position) const;
 
-        const glm::vec3 &get_min_corner() const;
-        const glm::vec3 &get_max_corner() const;
-
     private:
-        const SceneObject *_object;
+        std::shared_ptr<SceneObject> _object;
         std::vector<BoundingTree> _children;
 
         glm::vec3 _min_corner;
