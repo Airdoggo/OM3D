@@ -34,6 +34,7 @@ class SceneObject : NonCopyable {
         std::shared_ptr<StaticMesh> _mesh;
         std::shared_ptr<Material> _material;
         std::shared_ptr<StaticMesh> _bb_mesh;
+        std::shared_ptr<Material> _bbox_material;
 };
 
 }

@@ -137,5 +137,10 @@ Material Material::point_light_material() {
     return material;
 }
 
+Material Material::bbox_material() {
+    Material material;
+    material._program = Program::from_files("bbox.frag", "basic.vert");
+    return material;
+}
 
 }

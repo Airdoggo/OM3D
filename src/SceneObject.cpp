@@ -58,6 +58,7 @@ SceneObject::SceneObject(std::shared_ptr<StaticMesh> mesh, std::shared_ptr<Mater
 
     MeshData bb_mesh_data = { std::move(vertices), std::move(indices) };
     _bb_mesh = std::make_shared<StaticMesh>(StaticMesh(bb_mesh_data));
+    _bbox_material = std::make_shared<Material>(Material::bbox_material());
 }
 
 void SceneObject::render() const {
@@ -72,13 +73,13 @@ void SceneObject::render() const {
 }
 
 void SceneObject::render_bbox() const {
-    if (!_material || !_mesh || !_bb_mesh) {
+    if (!_bbox_material || !_mesh || !_bb_mesh) {
         return;
     }
 
-    _material->set_uniform(HASH("model"), transform());
-    _material->set_uniform(HASH("instanced"), 0u);
-    _material->bind();
+    _bbox_material->set_uniform(HASH("model"), transform());
+    _bbox_material->set_uniform(HASH("instanced"), 0u);
+    _bbox_material->bind();
     _bb_mesh->draw();
 }
 
