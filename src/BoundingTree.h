@@ -15,12 +15,14 @@ class BoundingTree {
         BoundingTree(const SceneObject &object);
         BoundingTree(std::vector<BoundingTree> &children);
 
-        void frustum_cull(std::vector<std::vector<const SceneObject *>> &objects, const Frustum &frustum) const;
+        void subdivise(size_t subdivisions);
+
+        void frustum_cull(std::vector<std::vector<const SceneObject *>> &objects, const Frustum &frustum, size_t &counter) const;
         bool frustum_cull_aabb(const Frustum &frustum) const;
         bool frustum_cull_aabb_plane(const glm::vec3 &plane, const glm::vec3 &plane_position) const;
 
-        const glm::vec3 &get_min_corner();
-        const glm::vec3 &get_max_corner();
+        const glm::vec3 &get_min_corner() const;
+        const glm::vec3 &get_max_corner() const;
 
     private:
         const SceneObject *_object;

@@ -108,30 +108,30 @@ std::unique_ptr<Scene> create_default_scene() {
     auto scene = std::make_unique<Scene>();
 
     // Load default cube model
-    auto result = Scene::from_gltf(std::string(data_path) + "forest_huge.glb", std::string(data_path) + "sphere.glb");
+    auto result = Scene::from_gltf(std::string(data_path) + "bistro.glb", std::string(data_path) + "sphere.glb");
     ALWAYS_ASSERT(result.is_ok, "Unable to load default scene");
     scene = std::move(result.value);
 
     // Add lights
     {
         PointLight light;
-        light.set_position(glm::vec3(-100.0f, 2.0f, 300.0f));
+        light.set_position(glm::vec3(1.0f, 2.0f, 4.0f));
         light.set_color(glm::vec3(0.0f, 10.0f, 0.0f));
-        light.set_radius(200.0f);
+        light.set_radius(100.0f);
         scene->add_object(std::move(light));
     }
     {
         PointLight light;
-        light.set_position(glm::vec3(30.0f, 2.0f, 0.0f));
+        light.set_position(glm::vec3(1.0f, 2.0f, -4.0f));
         light.set_color(glm::vec3(10.0f, 0.0f, 0.0f));
-        light.set_radius(100.0f);
+        light.set_radius(50.0f);
         scene->add_object(std::move(light));
     }
     {
         PointLight light;
-        light.set_position(glm::vec3(30.0f, 2.0f, 0.0f));
+        light.set_position(glm::vec3(1.0f, 2.0f, -4.0f));
         light.set_color(glm::vec3(0.0f, 0.0f, 10.0f));
-        light.set_radius(100.0f);
+        light.set_radius(50.0f);
         scene->add_object(std::move(light));
     }
 
@@ -236,9 +236,6 @@ int main(int, char**) {
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
                     ImGui::GetIO().Framerate);
 
-            const RenderInfo &info = scene->get_render_info();
-            ImGui::Text("Number of objects: %i\n Number of culled objects: %i", info.objects, info.objects - info.rendered);
-
             char buffer[1024] = {};
             if(ImGui::InputText("Load scene", buffer, sizeof(buffer), ImGuiInputTextFlags_EnterReturnsTrue)) {
                 auto result = Scene::from_gltf(buffer, std::string(data_path) + "sphere.glb");
@@ -250,8 +247,19 @@ int main(int, char**) {
                 }
             }
 
-            //imgui.load_existing_scene();
             imgui.display_debug_mode();
+
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::Spacing();
+
+            if (ImGui::SliderInt("BVH Subdivisions", &imgui.bvh_subdivisions, 1, 10)) {
+                scene->create_bounding_volume_hierarchy(imgui.bvh_subdivisions);
+            }
+
+            const RenderInfo &info = scene->get_render_info();
+            ImGui::Text("Number of objects: %i\nNumber of culled objects: %i\nNumber of checks: %i",
+                        info.objects, info.objects - info.rendered, info.checks);
         }
         imgui.finish();
 

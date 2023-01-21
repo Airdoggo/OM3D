@@ -15,6 +15,7 @@ namespace OM3D {
 struct RenderInfo {
     size_t objects = 0;
     size_t rendered = 0;
+    size_t checks = 0;
 };
 
 class Scene : NonMovable {
@@ -25,7 +26,7 @@ class Scene : NonMovable {
 
         static Result<std::unique_ptr<Scene>> from_gltf(const std::string& file_name, const std::string& light_file_name);
 
-        void create_bounding_volume_hierarchy();
+        void create_bounding_volume_hierarchy(size_t subdivisions = 2);
 
         void update_frame(const Camera& camera);
 

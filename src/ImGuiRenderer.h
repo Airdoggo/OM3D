@@ -21,6 +21,7 @@ class ImGuiRenderer : NonMovable {
 
         const char *debug_views[4] = { "No debug", "Albedo", "Normals", "Depth" };
         uint32_t debug_mode = 0;
+        int bvh_subdivisions = 2;
 
     private:
         void render(const ImDrawData* draw_data);

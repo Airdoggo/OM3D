@@ -35,7 +35,7 @@ void main() {
     const vec3 light_vec = to_light / dist;
 
     const float NoL = max(0., dot(light_vec, normal));
-    const float att = attenuation(dist, light.radius, 0.1);
+    const float att = attenuation(dist, light.radius);
 
     vec3 acc = light.color * (NoL * att);
 

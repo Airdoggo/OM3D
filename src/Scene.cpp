@@ -46,7 +46,7 @@ namespace OM3D
         _point_lights.emplace_back(std::move(obj));
     }
 
-    void Scene::create_bounding_volume_hierarchy() {
+    void Scene::create_bounding_volume_hierarchy(size_t subdivisions) {
         std::vector<BoundingTree> trees;
 
         for (auto &v : _objects)
@@ -58,6 +58,8 @@ namespace OM3D
         }
 
         _bounding_tree = BoundingTree(trees);
+        if (subdivisions > 1)
+            _bounding_tree.subdivise(subdivisions);
     }
 
     void Scene::update_frame(const Camera& camera) {
@@ -72,10 +74,11 @@ namespace OM3D
         _buffer.bind(BufferUsage::Uniform, 0);
 
         _render_info.rendered = 0;
+        _render_info.checks = 0;
 
         auto objects = std::vector<std::vector<const SceneObject *>>(_nb_different_objects);
 
-        _bounding_tree.frustum_cull(objects, _frustum);
+        _bounding_tree.frustum_cull(objects, _frustum, _render_info.checks);
 
         // Render every object
         for (auto &v : objects)
