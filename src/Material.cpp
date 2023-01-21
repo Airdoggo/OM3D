@@ -97,5 +97,11 @@ Material Material::textured_normal_mapped_material() {
     return material;
 }
 
+Material Material::bbox_material() {
+    Material material;
+    material._program = Program::from_files("bbox.frag", "basic.vert");
+    return material;
+}
+
 
 }

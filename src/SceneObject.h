@@ -10,20 +10,22 @@
 
 namespace OM3D {
 
-class SceneObject : NonCopyable {
+    class SceneObject : NonCopyable {
 
     public:
         SceneObject(std::shared_ptr<StaticMesh> mesh = nullptr, std::shared_ptr<Material> material = nullptr);
 
         void render() const;
+        void render_bbox() const;
         void render(int nb_instances) const;
 
         void set_transform(const glm::mat4& tr);
         const glm::mat4& transform() const;
 
-        const BoundingSphere &get_bounding_sphere() const;
-        const std::shared_ptr<Material> &get_material() const;
+        const BoundingSphere& get_bounding_sphere() const;
+        const std::shared_ptr<Material>& get_material() const;
 
+        bool is_visible = false;
         bool operator==(const SceneObject& other) const;
 
     private:
@@ -31,7 +33,9 @@ class SceneObject : NonCopyable {
 
         std::shared_ptr<StaticMesh> _mesh;
         std::shared_ptr<Material> _material;
-};
+        std::shared_ptr<StaticMesh> _bb_mesh;
+        std::shared_ptr<Material> _bbox_material;
+    };
 
 }
 

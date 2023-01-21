@@ -8,15 +8,17 @@ namespace OM3D {
 
 class SceneView {
     public:
-        SceneView(const Scene* scene = nullptr);
+        SceneView(Scene* scene = nullptr);
 
         Camera& camera();
         const Camera& camera() const;
 
         void render() const;
+        void compute_occlusion_query();
+        void sort_front_to_back();
 
     private:
-        const Scene* _scene = nullptr;
+        Scene* _scene = nullptr;
         Camera _camera;
 
 };
