@@ -5,6 +5,7 @@
 #include <PointLight.h>
 #include <Camera.h>
 #include <shader_structs.h>
+#include <BoundingTree.h>
 
 #include <vector>
 #include <memory>
@@ -23,6 +24,8 @@ class Scene : NonMovable {
         Scene(SceneObject &light_volume);
 
         static Result<std::unique_ptr<Scene>> from_gltf(const std::string& file_name, const std::string& light_file_name);
+
+        void create_bounding_volume_hierarchy();
 
         void update_frame(const Camera& camera);
 
@@ -43,10 +46,11 @@ class Scene : NonMovable {
         Material _sun_material = Material::sun_light_material();
         glm::vec3 _sun_direction = glm::vec3(0.2f, 1.0f, 0.1f);
 
+        BoundingTree _bounding_tree;
+
         // Updated each frame
         TypedBuffer<shader::FrameData> _buffer = TypedBuffer<shader::FrameData>(nullptr, 1);
         Frustum _frustum;
-        glm::vec3 _camera_position;
         RenderInfo _render_info;
 };
 

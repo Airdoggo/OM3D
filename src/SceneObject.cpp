@@ -57,12 +57,21 @@ const glm::mat4& SceneObject::transform() const {
     return _transform;
 }
 
-const BoundingSphere& SceneObject::get_bounding_sphere() const {
-    return _mesh->_bounding_sphere;
-}
-
 const std::shared_ptr<Material>& SceneObject::get_material() const {
     return _material;
+}
+
+std::pair<glm::vec3, glm::vec3> SceneObject::get_aabb() const {
+
+    auto coords = _mesh->get_aabb();
+    
+    // Change the AABB depending on the scale and position of the object
+    const glm::mat4 &t = transform();
+    const glm::vec3 position = glm::vec3(t[3].x, t[3].y, t[3].z);
+
+    glm::vec3 scale = { glm::length(t[0]), glm::length(t[1]), glm::length(t[2]) };
+
+    return { coords.first * scale + position, coords.second * scale + position };
 }
 
 bool SceneObject::operator==(const SceneObject& other) const {

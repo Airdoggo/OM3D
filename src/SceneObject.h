@@ -22,8 +22,8 @@ class SceneObject : NonCopyable {
         void set_transform(const glm::mat4& tr);
         const glm::mat4& transform() const;
 
-        const BoundingSphere &get_bounding_sphere() const;
         const std::shared_ptr<Material> &get_material() const;
+        std::pair<glm::vec3, glm::vec3> get_aabb() const;
 
         bool operator==(const SceneObject& other) const;
 

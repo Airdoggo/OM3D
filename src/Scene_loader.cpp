@@ -476,6 +476,8 @@ Result<std::unique_ptr<Scene>> Scene::from_gltf(const std::string& file_name, co
         }
     }
 
+    scene->create_bounding_volume_hierarchy();
+
     return {true, std::move(scene)};
 }
 

@@ -101,6 +101,8 @@ Frustum Camera::build_frustum() const {
         frustum._right_normal = camera_forward * s - camera_right * c;
     }
 
+    frustum._position = position();
+
     return frustum;
 }
 

@@ -9,26 +9,30 @@ StaticMesh::StaticMesh(const MeshData& data) :
     _vertex_buffer(data.vertices),
     _index_buffer(data.indices) {
     
-    glm::vec3 center = { 0, 0, 0 };
+    auto &vert = data.vertices;
 
-    // If our mesh is not centered, this should be used instead of the origin
-    /*for (const Vertex &v : data.vertices) {
-        center += v.position;
+    _min_coords = vert[0].position;
+    _max_coords = vert[0].position;
+
+    // Compute the AABB for later
+    for (size_t i = 1; i < vert.size(); i++) {
+        auto &pos = vert[i].position;
+
+        if (_min_coords.x > pos.x)
+            _min_coords.x = pos.x;
+        else if (_max_coords.x < pos.x)
+            _max_coords.x = pos.x;
+
+        if (_min_coords.y > pos.y)
+            _min_coords.y = pos.y;
+        else if (_max_coords.y < pos.y)
+            _max_coords.y = pos.y;
+
+        if (_min_coords.z > pos.z)
+            _min_coords.z = pos.z;
+        else if (_max_coords.z < pos.z)
+            _max_coords.z = pos.z;
     }
-    center /= data.indices.size();*/
-
-    _bounding_sphere = { center, 0.0f };
-
-    float max_dist = 0.0f;
-
-    for (const Vertex &v : data.vertices) {
-        glm::vec3 diff = center - v.position;
-        float dist = glm::length2(center - v.position);
-        if (dist > max_dist)
-            max_dist = dist;
-    }
-    
-    _bounding_sphere.radius = sqrtf(max_dist) + 0.01f;
 }
 
 void StaticMesh::draw() const {
@@ -95,6 +99,10 @@ void StaticMesh::draw_light_volume() const {
     glEnableVertexAttribArray(0);
 
     glDrawElements(GL_TRIANGLES, int(_index_buffer.element_count()), GL_UNSIGNED_INT, nullptr);
+}
+
+std::pair<glm::vec3, glm::vec3> StaticMesh::get_aabb() const {
+    return { _min_coords, _max_coords };
 }
 
 }

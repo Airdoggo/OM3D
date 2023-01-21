@@ -32,13 +32,16 @@ class StaticMesh : NonCopyable {
         void draw(int nb_instances) const;
         void draw_light_volume() const;
 
-        bool operator==(const StaticMesh& other) const;
+        std::pair<glm::vec3, glm::vec3> get_aabb() const;
 
-        BoundingSphere _bounding_sphere;
+        bool operator==(const StaticMesh& other) const;
 
     private:
         TypedBuffer<Vertex> _vertex_buffer;
         TypedBuffer<u32> _index_buffer;
+
+        glm::vec3 _min_coords;
+        glm::vec3 _max_coords;
 };
 
 }
