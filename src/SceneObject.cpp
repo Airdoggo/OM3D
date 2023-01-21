@@ -72,7 +72,7 @@ void SceneObject::render() const {
 }
 
 void SceneObject::render_bbox() const {
-    if (!_material || !_mesh) {
+    if (!_material || !_mesh || !_bb_mesh) {
         return;
     }
 

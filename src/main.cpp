@@ -166,11 +166,12 @@ int main(int, char**) {
     Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
     Framebuffer g_buffer(&depth, std::array{&albedo, &normals});
     Framebuffer shading_buffer(&depth, std::array{&lit});
-    Framebuffer bb_buffer(&depth, std::array{&albedo});
+    Framebuffer bb_buffer(&depth, std::array{&color});
 
     Material debug_material = Material::debug_material();
     Material sun_light_material = Material::sun_light_material();
     Material point_light_material = Material::point_light_material();
+    Material bbox_material = Material::bbox_material();
 
     point_light_material.set_uniform(HASH("screen_size"), window_size);
 
@@ -187,10 +188,11 @@ int main(int, char**) {
             process_inputs(window, scene_view.camera());
         }
 
-        scene_view.sort_front_to_back();
 
         // Render the scene
         {
+            scene_view.sort_front_to_back();
+            bbox_material.bind();
             bb_buffer.bind();
             scene_view.compute_occlusion_query();
             g_buffer.bind();
