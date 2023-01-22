@@ -16,7 +16,7 @@ class SceneView {
         void update_frame();
 
         void render() const;
-        void compute_lights() const;
+        void compute_lights(Material &m, const glm::uvec2 &window_size) const;
 
     private:
         Scene* _scene = nullptr;

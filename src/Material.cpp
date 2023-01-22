@@ -136,23 +136,4 @@ Material Material::debug_material() {
     return material;
 }
 
-Material Material::sun_light_material() {
-    Material material;
-    material.set_blend_mode(BlendMode::NoBlendNoCulling);
-    material.set_depth_test_mode(DepthTestMode::Xor);
-    material.set_write_z_buffer(false);
-    material._program = Program::from_files("sun_light.frag", "screen.vert");
-    return material;
-}
-
-Material Material::point_light_material() {
-    Material material;
-    material.set_blend_mode(BlendMode::Additive);
-    material.set_write_z_buffer(false);
-    material.set_depth_test_mode(DepthTestMode::ReversedFrontCull);
-    material._program = Program::from_files("point_light.frag", "light.vert");
-    return material;
-}
-
-
 }

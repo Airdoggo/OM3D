@@ -47,8 +47,6 @@ class Material {
         static Material textured_material();
         static Material textured_normal_mapped_material();
         static Material debug_material();
-        static Material sun_light_material();
-        static Material point_light_material();
 
     private:
         std::shared_ptr<Program> _program;

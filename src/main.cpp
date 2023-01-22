@@ -107,7 +107,7 @@ std::unique_ptr<Scene> create_default_scene() {
     auto scene = std::make_unique<Scene>();
 
     // Load default cube model
-    auto result = Scene::from_gltf(std::string(data_path) + "cube.glb", std::string(data_path) + "sphere.glb");
+    auto result = Scene::from_gltf(std::string(data_path) + "forest.glb");
     ALWAYS_ASSERT(result.is_ok, "Unable to load default scene");
     scene = std::move(result.value);
 
@@ -133,6 +133,8 @@ std::unique_ptr<Scene> create_default_scene() {
         light.set_radius(50.0f);
         scene->add_object(std::move(light));
     }
+
+    scene->init_light_buffer();
 
     return scene;
 }
@@ -160,6 +162,7 @@ int main(int, char**) {
     std::unique_ptr<Scene> scene = create_default_scene();
     SceneView scene_view(scene.get());
 
+    auto shading_program = Program::from_file("shading.comp");
     auto tonemap_program = Program::from_file("tonemap.comp");
 
     Texture albedo(window_size, ImageFormat::RGBA8_UNORM);
@@ -174,7 +177,7 @@ int main(int, char**) {
 
     Material debug_material = Material::debug_material();
 
-    scene->set_screen_size_uniform(window_size);
+    shading_program->set_uniform(HASH("screen_size"), window_size);
 
     for(;;) {
         glfwPollEvents();
@@ -203,6 +206,7 @@ int main(int, char**) {
         albedo.bind(0);
         normals.bind(1);
         depth.bind(2);
+        lit.bind_as_image(3, AccessType::WriteOnly);
 
         if (imgui.debug_mode) // Debug view
         {
@@ -214,8 +218,13 @@ int main(int, char**) {
             debug_material.set_uniform(HASH("debug"), imgui.debug_mode);
             glDrawArrays(GL_TRIANGLES, 0, 3);
         }
-        else // Screen-space light calculations
-            scene_view.compute_lights();
+        else { // Screen-space light calculations
+            shading_program->bind();
+            shading_program->set_uniform(HASH("inv_viewproj"), glm::inverse(scene_view.camera().view_proj_matrix()));
+            scene->bind_buffers();
+            
+            glDispatchCompute(align_up_to(window_size.x, 16) / 16, align_up_to(window_size.y, 16) / 16, 1);
+        }
 
         // Apply a tonemap in compute shader
         {
@@ -236,7 +245,7 @@ int main(int, char**) {
 
             char buffer[1024] = {};
             if(ImGui::InputText("Load scene", buffer, sizeof(buffer), ImGuiInputTextFlags_EnterReturnsTrue)) {
-                auto result = Scene::from_gltf(buffer, std::string(data_path) + "sphere.glb");
+                auto result = Scene::from_gltf(buffer);
                 if(!result.is_ok) {
                     std::cerr << "Unable to load scene (" << buffer << ")" << std::endl;
                 } else {

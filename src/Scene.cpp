@@ -9,10 +9,6 @@
 namespace OM3D
 {
     Scene::Scene()
-    {}
-
-    Scene::Scene(SceneObject &light_volume)
-    : _light_volume(std::move(light_volume))
     {
         auto mapping = _buffer.map(AccessType::WriteOnly);
         mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -48,6 +44,22 @@ namespace OM3D
     void Scene::add_object(PointLight obj)
     {
         _point_lights.emplace_back(std::move(obj));
+    }
+
+    void Scene::init_light_buffer() {
+        _light_buffer = TypedBuffer<shader::PointLight>(nullptr, std::max(_point_lights.size(), size_t(1)));
+        {
+            auto mapping = _light_buffer.map(AccessType::WriteOnly);
+            for(size_t i = 0; i != _point_lights.size(); ++i) {
+                const auto& light = _point_lights[i];
+                mapping[i] = {
+                    light.position(),
+                    light.radius(),
+                    light.color(),
+                    0.0f
+                };
+            }
+        }
     }
 
     void Scene::dynamic_add_object(SceneObject obj, size_t subdivisions) {
@@ -158,23 +170,9 @@ namespace OM3D
         return true;
     }
 
-    void Scene::compute_lights(const Camera& camera) const {
-
+    void Scene::bind_buffers() const {
         _buffer.bind(BufferUsage::Uniform, 0);
-        
-        _sun_material.bind();
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-        
-        _light_volume.get_material()->set_uniform(HASH("inv_viewproj"), glm::inverse(camera.view_proj_matrix()));
-
-        for (auto &pl : _point_lights) {
-            if (frustum_cull_light(pl, _frustum))
-                _light_volume.render_light_volume(pl.position(), pl.radius(), pl.color());
-        }
-    }
-
-    void Scene::set_screen_size_uniform(glm::uvec2 window_size) {
-        _light_volume.get_material()->set_uniform(HASH("screen_size"), window_size);
+        _light_buffer.bind(BufferUsage::Uniform, 1);
     }
 
     const RenderInfo &Scene::get_render_info() const {

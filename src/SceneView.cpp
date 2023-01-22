@@ -23,10 +23,4 @@ void SceneView::render() const {
     }
 }
 
-void SceneView::compute_lights() const {
-    if(_scene) {
-        _scene->compute_lights(_camera);
-    }
-}
-
 }
