@@ -28,6 +28,7 @@ namespace OM3D {
 
         void sort_front_to_back(const glm::vec3& camera_pos);
 
+        int _min_object_size = 2000;
     private:
         struct front_to_back
         {
@@ -46,8 +47,7 @@ namespace OM3D {
         std::vector<SceneObject> _objects;
         std::vector<PointLight> _point_lights;
         glm::vec3 _sun_direction = glm::vec3(0.2f, 1.0f, 0.1f);
-        OcclusionQuery occlusion_query;
-
+        OcclusionQuery _occlusion_query;
     };
 
 }

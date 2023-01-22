@@ -15,7 +15,7 @@ namespace OM3D
 
     Scene::Scene()
     {
-        occlusion_query = OcclusionQuery();
+        _occlusion_query = OcclusionQuery();
     }
 
     void Scene::add_object(SceneObject obj)
@@ -80,10 +80,10 @@ namespace OM3D
         glDepthMask(GL_FALSE);
 
         for (SceneObject& obj : _objects) {
-            occlusion_query.begin_query();
+            _occlusion_query.begin_query();
             obj.render_bbox();
-            occlusion_query.end_query();
-            obj.is_visible = occlusion_query.has_samples_passed();
+            _occlusion_query.end_query();
+            obj.is_visible = _occlusion_query.has_samples_passed();
         }
 
         // Enable writing to frame and depth buffer
@@ -129,25 +129,25 @@ namespace OM3D
                 o.is_visible = false;
                 continue;
             }
-            if (o.get_nb_triangles() < 200) {
+            if (o.get_nb_triangles() < _min_object_size) {
                 o.render();
                 continue;
             }
             if (o.is_visible)
             {
-                occlusion_query.begin_query();
+                _occlusion_query.begin_query();
                 o.render();
-                occlusion_query.end_query();
-                o.is_visible = occlusion_query.has_samples_passed();
+                _occlusion_query.end_query();
+                o.is_visible = _occlusion_query.has_samples_passed();
             }
             else {
                 glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
                 glDepthMask(GL_FALSE);
 
-                occlusion_query.begin_query();
+                _occlusion_query.begin_query();
                 o.render_bbox();
-                occlusion_query.end_query();
-                o.is_visible = occlusion_query.has_samples_passed();
+                _occlusion_query.end_query();
+                o.is_visible = _occlusion_query.has_samples_passed();
 
                 glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
                 glDepthMask(GL_TRUE);

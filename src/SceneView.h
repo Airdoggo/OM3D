@@ -17,8 +17,8 @@ class SceneView {
         void compute_occlusion_query();
         void sort_front_to_back();
 
-    private:
         Scene* _scene = nullptr;
+    private:
         Camera _camera;
 
 };

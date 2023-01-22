@@ -210,6 +210,9 @@ int main(int, char**) {
                     scene_view = SceneView(scene.get());
                 }
             }
+            {
+                ImGui::SliderInt("Min obj size for occlusion culling", &scene_view._scene->_min_object_size, 0, 10000);
+            }
         }
         imgui.finish();
 
