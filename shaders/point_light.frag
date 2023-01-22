@@ -39,6 +39,6 @@ void main() {
 
     vec3 acc = light.color * (NoL * att);
 
-    out_color = vec4(linear_to_sRGB(albedo * acc), 1.0);
+    out_color = vec4(albedo * acc, 1.0);
 }
 

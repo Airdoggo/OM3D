@@ -107,7 +107,7 @@ std::unique_ptr<Scene> create_default_scene() {
     auto scene = std::make_unique<Scene>();
 
     // Load default cube model
-    auto result = Scene::from_gltf(std::string(data_path) + "forest.glb", std::string(data_path) + "sphere.glb");
+    auto result = Scene::from_gltf(std::string(data_path) + "cube.glb", std::string(data_path) + "sphere.glb");
     ALWAYS_ASSERT(result.is_ok, "Unable to load default scene");
     scene = std::move(result.value);
 
@@ -162,7 +162,7 @@ int main(int, char**) {
 
     auto tonemap_program = Program::from_file("tonemap.comp");
 
-    Texture albedo(window_size, ImageFormat::RGB8_sRGB);
+    Texture albedo(window_size, ImageFormat::RGBA8_UNORM);
 	Texture normals(window_size, ImageFormat::RGBA8_UNORM);
 	Texture depth(window_size, ImageFormat::Depth32_FLOAT);
     Texture lit(window_size, ImageFormat::RGBA16_FLOAT);
