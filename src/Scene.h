@@ -28,7 +28,7 @@ namespace OM3D {
 
         void sort_front_to_back(const glm::vec3& camera_pos);
 
-        int _min_object_size = 2000;
+        int _min_object_size = 0;
     private:
         struct front_to_back
         {

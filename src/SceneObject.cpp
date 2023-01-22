@@ -7,19 +7,18 @@ namespace OM3D {
     SceneObject::SceneObject(std::shared_ptr<StaticMesh> mesh, std::shared_ptr<Material> material) :
         _mesh(std::move(mesh)),
         _material(std::move(material)) {
-        // compute the max/min positions for the model mesh
         float maxX, maxY, maxZ, minX, minY, minZ;
-        auto oVertices = _mesh->_data.vertices;
-        maxX = oVertices[0].position[0];
-        maxY = oVertices[0].position[1];
-        maxZ = oVertices[0].position[2];
-        minX = oVertices[0].position[0];
-        minY = oVertices[0].position[1];
-        minZ = oVertices[0].position[2];
+        auto obj_vertices = _mesh->_data.vertices;
+        maxX = obj_vertices[0].position[0];
+        maxY = obj_vertices[0].position[1];
+        maxZ = obj_vertices[0].position[2];
+        minX = obj_vertices[0].position[0];
+        minY = obj_vertices[0].position[1];
+        minZ = obj_vertices[0].position[2];
 
-        for (int i = 1; i < oVertices.size(); i++)
+        for (int i = 1; i < obj_vertices.size(); i++)
         {
-            Vertex current_vertex = oVertices[i];
+            Vertex current_vertex = obj_vertices[i];
             maxX = current_vertex.position[0] > maxX ? current_vertex.position[0] : maxX;
             maxY = current_vertex.position[1] > maxY ? current_vertex.position[1] : maxY;
             maxZ = current_vertex.position[2] > maxZ ? current_vertex.position[2] : maxZ;
