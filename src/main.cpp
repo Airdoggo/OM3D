@@ -97,7 +97,6 @@ void process_inputs(GLFWwindow* window, Camera& camera) {
             rot = glm::rotate(rot, delta.y, camera.right());
             camera.set_view(glm::lookAt(camera.position(), camera.position() + (glm::mat3(rot) * camera.forward()), (glm::mat3(rot) * camera.up())));
         }
-
     }
 
     mouse_pos = new_mouse_pos;
@@ -108,7 +107,7 @@ std::unique_ptr<Scene> create_default_scene() {
     auto scene = std::make_unique<Scene>();
 
     // Load default cube model
-    auto result = Scene::from_gltf(std::string(data_path) + "forest_huge.glb", std::string(data_path) + "sphere.glb");
+    auto result = Scene::from_gltf(std::string(data_path) + "forest.glb", std::string(data_path) + "sphere.glb");
     ALWAYS_ASSERT(result.is_ok, "Unable to load default scene");
     scene = std::move(result.value);
 

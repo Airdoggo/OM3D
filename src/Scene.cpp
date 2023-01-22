@@ -51,10 +51,10 @@ namespace OM3D
     }
 
     void Scene::dynamic_add_object(SceneObject obj, size_t subdivisions) {
-        std::shared_ptr<SceneObject> *new_object = nullptr;
-        add_object(std::move(obj), new_object);
+        std::shared_ptr<SceneObject> new_object;
+        add_object(std::move(obj), &new_object);
 
-        BoundingTree new_leaf(*new_object);
+        BoundingTree new_leaf(new_object);
         _bounding_tree.insert(new_leaf, subdivisions);
     }
 

@@ -1,6 +1,7 @@
 #include "BoundingTree.h"
 
 #include <algorithm>
+#include <limits>
 
 namespace OM3D {
 
@@ -95,7 +96,82 @@ bool BoundingTree::fit_children() {
 }
 
 void BoundingTree::insert(BoundingTree &obj, size_t subdivision) {
-    
+    // Leaf, so we create a new node with the current object and the new object as children
+    if (_object) {
+        _children.emplace_back(BoundingTree(_object));
+        _children.emplace_back(std::move(obj));
+        _object = nullptr;
+        fit_children();
+        return;
+    }
+
+    if (_children.size() < subdivision) {
+        _children.emplace_back(std::move(obj));
+        fit_children();
+        return;
+    }
+
+    std::vector<glm::vec3> tmp_results;
+
+    glm::vec3 obj_halfsize = (obj._max_corner - obj._min_corner) * 0.5f;
+    glm::vec3 object_center = (obj._min_corner + obj._max_corner) * 0.5f;
+
+    // Find a child that encloses the new object
+    for (auto &c : _children) {
+        glm::vec3 child_halfsize = (c._max_corner - c._min_corner) * 0.5f;
+        glm::vec3 child_center = (c._min_corner + c._max_corner) * 0.5f;
+
+        glm::vec3 offset = child_center - object_center;
+
+        glm::vec3 intersection = object_center + child_center - offset;
+
+        // Object is contained within, no resize necessary
+        if (intersection == obj_halfsize * 2.0f) {
+            c.insert(obj, subdivision);
+            return;
+        }
+
+        tmp_results.emplace_back(intersection);
+    }
+
+    float best_value = 0.f;
+    int best_index = -1;
+
+    // No suitable child has been found, so we find the child that encloses the best the object
+    for (int i = 0; i < (int)tmp_results.size(); i++) {
+        auto &inter = tmp_results[i];
+
+        // No intersection
+        if (inter.x < 0 || inter.y < 0 || inter.z < 0)
+            continue;
+
+        float volume = inter.x * inter.y * inter.z;
+        if (volume > best_value) {
+            best_value = volume;
+            best_index = i;
+        }
+    }
+
+    if (best_index != -1) {
+        _children[best_index].insert(obj, subdivision);
+        fit_children();
+        return;
+    }
+
+    best_value = std::numeric_limits<float>::max();
+    // Worst case scenario, we just take the closest child
+    for (int i = 0; i < (int)_children.size(); i++) {
+        glm::vec3 child_center = (_children[i]._min_corner + _children[i]._max_corner) * 0.5f;
+        float dist = glm::distance(object_center, child_center);
+
+        if (dist < best_value) {
+            best_value = dist;
+            best_index = i;
+        }
+    }
+
+    _children[best_index].insert(obj, subdivision);
+    fit_children();
 }
 
 RemoveResult BoundingTree::remove(const std::shared_ptr<SceneObject> object) {
