@@ -80,10 +80,10 @@ namespace OM3D
         glDepthMask(GL_FALSE);
 
         for (SceneObject& obj : _objects) {
-            occlusion_query.beginQuery();
+            occlusion_query.begin_query();
             obj.render_bbox();
-            occlusion_query.endQuery();
-            obj.is_visible = occlusion_query.anySamplesPassed();
+            occlusion_query.end_query();
+            obj.is_visible = occlusion_query.has_samples_passed();
         }
 
         // Enable writing to frame and depth buffer
@@ -129,21 +129,25 @@ namespace OM3D
                 o.is_visible = false;
                 continue;
             }
+            if (o.get_nb_triangles() < 200) {
+                o.render();
+                continue;
+            }
             if (o.is_visible)
             {
-                occlusion_query.beginQuery();
+                occlusion_query.begin_query();
                 o.render();
-                occlusion_query.endQuery();
-                o.is_visible = occlusion_query.anySamplesPassed();
+                occlusion_query.end_query();
+                o.is_visible = occlusion_query.has_samples_passed();
             }
             else {
                 glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
                 glDepthMask(GL_FALSE);
 
-                occlusion_query.beginQuery();
+                occlusion_query.begin_query();
                 o.render_bbox();
-                occlusion_query.endQuery();
-                o.is_visible = occlusion_query.anySamplesPassed();
+                occlusion_query.end_query();
+                o.is_visible = occlusion_query.has_samples_passed();
 
                 glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
                 glDepthMask(GL_TRUE);

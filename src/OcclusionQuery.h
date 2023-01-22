@@ -9,33 +9,16 @@ namespace OM3D {
     {
     public:
         OcclusionQuery();
-        void free() const;
 
-        /**
-            * Begins occlusion query. Until the query is ended, samples
-            * that pass the rendering pipeline are counted.
-            */
-        void beginQuery() const;
+        void begin_query() const;
 
-        /**
-            * Ends occlusion query and caches the result - number
-            * of samples that passed the rendering pipeline.
-            */
-        void endQuery();
+        void end_query();
 
-        /**
-            * Gets number of samples that have passed the rendering pipeline.
-            */
-        GLint getNumSamplesPassed() const { return samplesPassed; }
-
-        /**
-        * Helper method that returns if any samples have passed the rendering pipeline.
-        */
-        bool anySamplesPassed() const { return samplesPassed > 0; }
+        bool has_samples_passed() const { return samples_passed > 0; }
 
     private:
-        GLuint queryID = 0; // OpenGL query object ID
-        GLint samplesPassed = 0; // Number of samples passed in last query
+        GLuint query_id = 0; // OpenGL query object ID
+        GLint samples_passed = 0; // Number of samples passed in last query
     };
 }
 

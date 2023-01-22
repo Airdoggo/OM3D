@@ -35,6 +35,7 @@ class StaticMesh : NonCopyable {
 
         BoundingSphere _bounding_sphere;
         MeshData _data;
+        size_t _nb_triangles;
 
     private:
         TypedBuffer<Vertex> _vertex_buffer;

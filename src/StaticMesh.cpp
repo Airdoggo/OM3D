@@ -7,7 +7,8 @@ namespace OM3D {
 
 StaticMesh::StaticMesh(const MeshData& data) :
     _vertex_buffer(data.vertices),
-    _index_buffer(data.indices), _data(data) {
+    _index_buffer(data.indices), _data(data),
+    _nb_triangles(data.vertices.size()/3){
     
     glm::vec3 center = { 0, 0, 0 };
 

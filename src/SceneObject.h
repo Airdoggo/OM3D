@@ -24,6 +24,7 @@ namespace OM3D {
 
         const BoundingSphere& get_bounding_sphere() const;
         const std::shared_ptr<Material>& get_material() const;
+        const size_t get_nb_triangles() const{ return _mesh->_nb_triangles; }
 
         bool is_visible = false;
         bool operator==(const SceneObject& other) const;
