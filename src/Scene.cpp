@@ -44,6 +44,9 @@ namespace OM3D
     void Scene::add_object(PointLight obj)
     {
         _point_lights.emplace_back(std::move(obj));
+
+        auto mapping = _buffer.map(AccessType::WriteOnly);
+        mapping[0].point_light_count = (glm::uint)_point_lights.size();
     }
 
     void Scene::init_light_buffer() {
@@ -172,11 +175,15 @@ namespace OM3D
 
     void Scene::bind_buffers() const {
         _buffer.bind(BufferUsage::Uniform, 0);
-        _light_buffer.bind(BufferUsage::Uniform, 1);
+        _light_buffer.bind(BufferUsage::Storage, 1);
     }
 
     const RenderInfo &Scene::get_render_info() const {
         return _render_info;
+    }
+
+    const size_t Scene::get_nb_lights() const {
+        return _point_lights.size();
     }
 
 }

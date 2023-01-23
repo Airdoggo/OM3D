@@ -2,23 +2,32 @@
 
 #include "utils.glsl"
 
-layout(local_size_x = 16, local_size_y = 16) in;
+#define TILE_SIZE 16
+
+layout(local_size_x = TILE_SIZE, local_size_y = TILE_SIZE) in;
 
 layout(binding = 0) uniform sampler2D in_albedo;
 layout(binding = 1) uniform sampler2D in_normal;
 layout(binding = 2) uniform sampler2D in_depth;
-layout(rgba8, binding = 3) uniform writeonly image2D out_color;
+layout(rgba16f, binding = 3) uniform writeonly image2D out_color;
 
 layout(binding = 0) uniform Data {
     FrameData frame;
 };
 
-layout(binding = 1) buffer PointLights {
+layout(std430, binding = 1) buffer PointLights {
     PointLight point_lights[];
 };
 
 uniform mat4 inv_viewproj;
+uniform mat4 view_mat;
+uniform mat4 proj_mat;
 uniform vec2 screen_size;
+
+shared uint lights_indices[NB_LIGHTS];
+shared uint tile_nb_lights;
+shared uint min_depth_i;
+shared uint max_depth_i;
 
 const vec3 ambient = vec3(0.0);
 
@@ -30,6 +39,7 @@ vec3 unproject(vec2 uv, float depth) {
 
 void main() {
 
+    // Fetch G-Buffer data
     const ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
 
     const vec3 albedo = texelFetch(in_albedo, coord, 0).rgb;
@@ -39,21 +49,84 @@ void main() {
 
     vec3 position = unproject(coord / screen_size, depth);
 
+    // Shared variable initialization
+    if (gl_LocalInvocationIndex == 0) {
+        tile_nb_lights = 0;
+        min_depth_i = 0xffffffff;
+        max_depth_i = 0;
+    }
+    barrier();
+
+
+    // Get min and max depth in tile
+    uint udepth = floatBitsToUint(depth);
+    atomicMin(min_depth_i, udepth);
+    atomicMax(max_depth_i, udepth);
+
+    barrier();
+
+
+    // Compute frustum
+    vec2 tile_scale = screen_size / (2.0 * gl_WorkGroupSize.xy);
+    vec2 tile_bias = tile_scale - gl_WorkGroupID.xy;
+    vec4 c1 = vec4(proj_mat[0][0] * tile_scale.x, 0.0, -tile_bias.x, 0.0);
+    vec4 c2 = vec4(0.0, proj_mat[1][1] * tile_scale.y,  -tile_bias.y, 0.0);
+    vec4 c4 = vec4(0.0, 0.0, -1.0, 0.0);
+
+    float min_depth = uintBitsToFloat(min_depth_i);
+    float max_depth = 1. / uintBitsToFloat(max_depth_i);
+
+    vec4 frustum[6];
+
+    frustum[0] = c4 + c1; // Left
+    // Left
+    frustum[1] = c4 - c1; // Right
+    // Left
+    frustum[2] = c4 - c2; // Top
+    // Left
+    frustum[3] = c4 + c2; // Bottom
+    // Left
+    frustum[4] = vec4(0.0, 0.0, 1.0, max_depth); // Far
+    // Left
+    frustum[5] = vec4(0.0, 0.0, -1.0, -min_depth); // Near (not working)
+
+    for (uint i = gl_LocalInvocationIndex; i < NB_LIGHTS; i += TILE_SIZE * TILE_SIZE) {
+        PointLight p = point_lights[i];
+        float r = p.radius;
+        vec4 pos = view_mat * vec4(p.position, 1.0);
+        bool in_frustum = true;
+
+        #pragma unroll 6
+        for (uint i = 0; i < 6 && in_frustum; i++) {
+            float d = dot(normalize(frustum[i]), pos);
+            in_frustum = in_frustum && (d >= -p.radius);
+        }
+
+        if (in_frustum) {
+            uint offset = atomicAdd(tile_nb_lights, 1);
+            lights_indices[offset] = i;
+        }
+    }
+
+    barrier();
+
+
     // Light Calculation
-    if (depth == 0.0) {
+    if (depth == 0.0) { // Background
         return;
     }
-    
+
     vec3 acc = frame.sun_color * max(0.0, dot(frame.sun_dir, normal)) + ambient;
 
-    for(uint i = 0; i != frame.point_light_count; ++i) {
-        PointLight light = point_lights[i];
+    for(uint i = 0; i < tile_nb_lights; i++) {
+        PointLight light = point_lights[lights_indices[i]];
         const vec3 to_light = (light.position - position);
         const float dist = length(to_light);
         const vec3 light_vec = to_light / dist;
 
         const float NoL = dot(light_vec, normal);
         const float att = attenuation(dist, light.radius);
+
         if(NoL <= 0.0 || att <= 0.0f) {
             continue;
         }
@@ -63,6 +136,7 @@ void main() {
 
     vec3 color = albedo * acc;
 
-    imageStore(out_color, coord, vec4(color, 1.0));
+    //imageStore(out_color, coord, vec4(vec3(float(tile_nb_lights) / NB_LIGHTS), 1.0));
+    imageStore(out_color, coord, vec4(albedo * acc, 1.0));
 }
 

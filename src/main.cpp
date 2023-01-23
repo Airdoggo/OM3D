@@ -107,7 +107,7 @@ std::unique_ptr<Scene> create_default_scene() {
     auto scene = std::make_unique<Scene>();
 
     // Load default cube model
-    auto result = Scene::from_gltf(std::string(data_path) + "forest.glb");
+    auto result = Scene::from_gltf(std::string(data_path) + "forest_huge.glb");
     ALWAYS_ASSERT(result.is_ok, "Unable to load default scene");
     scene = std::move(result.value);
 
@@ -162,7 +162,7 @@ int main(int, char**) {
     std::unique_ptr<Scene> scene = create_default_scene();
     SceneView scene_view(scene.get());
 
-    auto shading_program = Program::from_file("shading.comp");
+    auto shading_program = Program::from_file("shading.comp", {"NB_LIGHTS " + std::to_string(scene->get_nb_lights())});
     auto tonemap_program = Program::from_file("tonemap.comp");
 
     Texture albedo(window_size, ImageFormat::RGBA8_UNORM);
@@ -206,7 +206,6 @@ int main(int, char**) {
         albedo.bind(0);
         normals.bind(1);
         depth.bind(2);
-        lit.bind_as_image(3, AccessType::WriteOnly);
 
         if (imgui.debug_mode) // Debug view
         {
@@ -220,10 +219,14 @@ int main(int, char**) {
         }
         else { // Screen-space light calculations
             shading_program->bind();
+            lit.bind_as_image(3, AccessType::WriteOnly);
             shading_program->set_uniform(HASH("inv_viewproj"), glm::inverse(scene_view.camera().view_proj_matrix()));
+            shading_program->set_uniform(HASH("proj_mat"), scene_view.camera().projection_matrix());
+            shading_program->set_uniform(HASH("view_mat"), scene_view.camera().view_matrix());
             scene->bind_buffers();
             
             glDispatchCompute(align_up_to(window_size.x, 16) / 16, align_up_to(window_size.y, 16) / 16, 1);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);
         }
 
         // Apply a tonemap in compute shader
@@ -231,7 +234,7 @@ int main(int, char**) {
             tonemap_program->bind();
             lit.bind(0);
             color.bind_as_image(1, AccessType::WriteOnly);
-            glDispatchCompute(align_up_to(window_size.x, 8), align_up_to(window_size.y, 8), 1);
+            glDispatchCompute(align_up_to(window_size.x, 8) / 8, align_up_to(window_size.y, 8) / 8, 1);
         }
         // Blit tonemap result to screen
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -251,6 +254,7 @@ int main(int, char**) {
                 } else {
                     scene = std::move(result.value);
                     scene_view = SceneView(scene.get());
+                    shading_program = Program::from_file("shading.comp", {"NB_LIGHTS " + std::to_string(scene->get_nb_lights())});
                 }
             }
 

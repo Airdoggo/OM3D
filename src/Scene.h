@@ -40,6 +40,7 @@ class Scene : NonMovable {
         void dynamic_remove_object(const std::shared_ptr<SceneObject> &object);
 
         const RenderInfo &get_render_info() const;
+        const size_t get_nb_lights() const;
 
     private:
         std::vector<std::vector<std::shared_ptr<SceneObject>>> _objects;

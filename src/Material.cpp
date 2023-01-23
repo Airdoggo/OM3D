@@ -117,13 +117,13 @@ std::shared_ptr<Material> Material::empty_material() {
 
 Material Material::textured_material() {
     Material material;
-    material._program = Program::from_files("gbuffer.frag", "basic.vert", {"TEXTURED"});
+    material._program = Program::from_files("gbuffer.frag", "basic.vert", {"TEXTURED 1"});
     return material;
 }
 
 Material Material::textured_normal_mapped_material() {
     Material material;
-    material._program = Program::from_files("gbuffer.frag", "basic.vert", std::array<std::string, 2>{"TEXTURED", "NORMAL_MAPPED"});
+    material._program = Program::from_files("gbuffer.frag", "basic.vert", std::array<std::string, 2>{"TEXTURED 1", "NORMAL_MAPPED 1"});
     return material;
 }
 

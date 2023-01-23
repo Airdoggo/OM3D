@@ -25,7 +25,7 @@ static std::string read_shader(const std::string& file_name, Span<const std::str
         define_added = true;
         std::string defs = "\n";
         for(const std::string& def : defines) {
-            defs += "#define " + def + " 1\n";
+            defs += "#define " + def + "\n";
         }
         return defs;
     };
