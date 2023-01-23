@@ -258,7 +258,8 @@ int main(int, char**) {
                 } else {
                     scene = std::move(result.value);
                     scene_view = SceneView(scene.get());
-                    shading_program = Program::from_file("shading.comp", {"NB_LIGHTS " + std::to_string(scene->get_nb_lights())});
+                    size_t size = scene->get_nb_lights();
+                    shading_program = Program::from_file("shading.comp", {"NB_LIGHTS " + std::to_string(size == 0 ? 1 : size)});
                 }
             }
 
