@@ -41,9 +41,12 @@ void SceneObject::render_light_volume(const glm::vec3 &position, float radius, c
     _material->set_uniform(HASH("light.radius"), radius);
     _material->set_uniform(HASH("light.color"), color);
 
-    glm::mat4 transform = {radius, 0., 0., 0.,
-                            0., radius, 0., 0.,
-                            0., 0., radius, 0.,
+    // Sphere is imperfect, so we increase the mesh's radius by a little to prevent culling when we shouldn't
+    float r = radius * 1.1f;
+
+    glm::mat4 transform = { r, 0., 0., 0.,
+                            0., r, 0., 0.,
+                            0., 0., r, 0.,
                             position.x, position.y, position.z, 1.};
     _material->set_uniform(HASH("model"), transform);
     _mesh->draw_light_volume();

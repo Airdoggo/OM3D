@@ -11,12 +11,6 @@ StaticMesh::StaticMesh(const MeshData& data) :
     
     glm::vec3 center = { 0, 0, 0 };
 
-    // If our mesh is not centered, this should be used instead of the origin
-    /*for (const Vertex &v : data.vertices) {
-        center += v.position;
-    }
-    center /= data.indices.size();*/
-
     _bounding_sphere = { center, 0.0f };
 
     float max_dist = 0.0f;

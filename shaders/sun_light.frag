@@ -23,5 +23,5 @@ void main() {
     const vec3 normal = (texelFetch(in_normal, coord, 0).xyz - 0.5) * 2.;
 
     vec3 acc = frame.sun_color * max(0.0, dot(frame.sun_dir, normal)) + ambient;
-    out_color = vec4(linear_to_sRGB(albedo * acc), 1.0);
+    out_color = vec4(albedo * acc, 1.0);
 }

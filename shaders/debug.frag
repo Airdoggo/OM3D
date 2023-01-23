@@ -21,7 +21,7 @@ void main() {
 
     if (debug == ALBEDO) {
         const vec3 albedo = texelFetch(in_albedo, coord, 0).rgb;
-        out_color = vec4(linear_to_sRGB(albedo), 1.0);
+        out_color = vec4(albedo, 1.0);
     }
     else if (debug == NORMALS) {
         const vec3 normal = (texelFetch(in_normal, coord, 0).xyz - 0.5) * 2.;

@@ -86,18 +86,6 @@ namespace OM3D
         // Render every object
         for (auto &v : _objects)
         {
-            // If there are not enough objects, the instancing overhead is too big and performances are lower
-            if (v.size() < 50)
-            {
-                for (const auto &o : v)
-                {
-                    if (frustum_cull(o, _frustum, _camera_position))
-                        o.render();
-                }
-
-                continue;
-            }
-
             size_t i = 0;
 
             // Fill and bind objects buffer
