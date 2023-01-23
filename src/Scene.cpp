@@ -23,11 +23,8 @@ namespace OM3D
             {{-0.5, -0.5, -0.5}},
             {{0.5, -0.5, -0.5}},
             {{-0.5, 0.5, -0.5}},
-            {{
-                0.5,
-                0.5,
-                -0.5,
-            }}};
+            {{0.5, 0.5, -0.5,}}
+        };
         std::vector<u32> cube_indices = {
             2, 7, 6,
             2, 3, 7,
@@ -41,6 +38,7 @@ namespace OM3D
             0, 1, 3,
             4, 6, 7,
             4, 7, 5};
+
         _cube = SceneObject(std::make_shared<StaticMesh>(MeshData{cube_vertices, cube_indices}),
                             std::make_shared<Material>(Material::aabb_material()));
     }
