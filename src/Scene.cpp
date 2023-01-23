@@ -153,26 +153,6 @@ namespace OM3D
         }
     }
 
-    bool frustum_cull_light(const PointLight &light, const Frustum &frustum)
-    {
-        const glm::vec3 &position = light.position();
-        float radius = light.radius();
-
-        // Check against every plane
-        if (glm::dot(position + frustum._left_normal * radius - frustum._position, frustum._left_normal) <= 0)
-            return false;
-        if (glm::dot(position + frustum._right_normal * radius - frustum._position, frustum._right_normal) <= 0)
-            return false;
-        if (glm::dot(position + frustum._near_normal * radius - frustum._position, frustum._near_normal) <= 0)
-            return false;
-        if (glm::dot(position + frustum._top_normal * radius - frustum._position, frustum._top_normal) <= 0)
-            return false;
-        if (glm::dot(position + frustum._bottom_normal * radius - frustum._position, frustum._bottom_normal) <= 0)
-            return false;
-
-        return true;
-    }
-
     void Scene::bind_buffers() const {
         _buffer.bind(BufferUsage::Uniform, 0);
         _light_buffer.bind(BufferUsage::Storage, 1);
