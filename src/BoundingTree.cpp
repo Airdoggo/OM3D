@@ -265,4 +265,20 @@ bool BoundingTree::frustum_cull_aabb_plane(const glm::vec3 &plane_normal, const 
     return dot(plane_normal, far_vert - plane_position) <= 0;
 }
 
+void BoundingTree::draw_recursive(SceneObject &cube, size_t level) {
+    if (level != 0) {
+        for (auto &c : _children) {
+            c.draw_recursive(cube, level - 1);
+        }
+        return;
+    }
+
+    glm::vec3 size = _max_corner - _min_corner;
+    glm::vec3 center = (_min_corner + _max_corner) * 0.5f;
+    glm::mat4 transform = glm::translate(glm::mat4(1), center) * glm::scale(glm::mat4(1), size);
+
+    cube.get_material()->set_uniform(HASH("middle"), center);
+    cube.render(transform);
+}
+
 }

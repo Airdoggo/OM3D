@@ -4,6 +4,10 @@
 
 #define TILE_SIZE 16
 
+// Pseudo-enum for debugging options
+const uint AABB = 4;
+const uint TILES = 5;
+
 layout(local_size_x = TILE_SIZE, local_size_y = TILE_SIZE) in;
 
 layout(binding = 0) uniform sampler2D in_albedo;
@@ -111,13 +115,15 @@ void main() {
 
     barrier();
 
-    if (debug != 0) {
+    if (debug == TILES) {
         imageStore(out_color, coord, vec4(vec3(float(tile_nb_lights) / NB_LIGHTS), 1.0));
         return;
     }
 
     // Light Calculation
     if (depth == 0.0) { // Background
+        if (debug == AABB)
+            imageStore(out_color, coord, vec4(albedo, 1.0));
         return;
     }
 

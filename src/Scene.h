@@ -31,7 +31,8 @@ class Scene : NonMovable {
         void update_frame(const Camera& camera);
         void bind_buffers() const;
 
-        void render(const Camera& camera) ;
+        void render(const Camera& camera);
+        void render_aabb(size_t level);
 
         void add_object(SceneObject obj, std::shared_ptr<SceneObject> *object = nullptr);
         void add_object(PointLight obj);
@@ -50,6 +51,8 @@ class Scene : NonMovable {
 
         BoundingTree _bounding_tree;
         size_t _nb_different_objects = 0;
+
+        SceneObject _cube;
 
         // Updated each frame
         TypedBuffer<shader::FrameData> _buffer = TypedBuffer<shader::FrameData>(nullptr, 1);

@@ -30,6 +30,17 @@ void SceneObject::render(int nb_instances) const {
     _mesh->draw(nb_instances);
 }
 
+void SceneObject::render(const glm::mat4 &trnsfrm) const {
+    if(!_material || !_mesh) {
+        return;
+    }
+
+    _material->set_uniform(HASH("model"), trnsfrm);
+    _material->set_uniform(HASH("instanced"), 0u);
+    _material->bind();
+    _mesh->draw();
+}
+
 void SceneObject::set_transform(const glm::mat4 &tr) {
     _transform = tr;
 }

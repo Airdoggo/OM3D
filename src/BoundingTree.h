@@ -31,6 +31,8 @@ class BoundingTree {
         bool frustum_cull_aabb(const Frustum &frustum) const;
         bool frustum_cull_aabb_plane(const glm::vec3 &plane, const glm::vec3 &plane_position) const;
 
+        void draw_recursive(SceneObject &cube, size_t level);
+
     private:
         std::shared_ptr<SceneObject> _object;
         std::vector<BoundingTree> _children;

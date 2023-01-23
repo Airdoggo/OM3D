@@ -17,6 +17,7 @@ class SceneObject : NonCopyable {
 
         void render() const;
         void render(int nb_instances) const;
+        void render(const glm::mat4 &trnsfrm) const;
 
         void set_transform(const glm::mat4& tr);
         const glm::mat4& transform() const;

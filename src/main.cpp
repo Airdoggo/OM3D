@@ -198,6 +198,9 @@ int main(int, char**) {
         // Render the scene
         {
             g_buffer.bind();
+
+            if (imgui.debug_mode == AABB)
+                scene->render_aabb(imgui.aabb_render_level);
             scene_view.render();
         }
 
@@ -268,6 +271,7 @@ int main(int, char**) {
             if (ImGui::SliderInt("BVH Subdivisions", &imgui.bvh_subdivisions, 1, 10)) {
                 scene->create_bounding_volume_hierarchy(imgui.bvh_subdivisions);
             }
+            ImGui::SliderInt("Debug Hierarchy Render Level", &imgui.aabb_render_level, 1, 10);
 
             const RenderInfo &info = scene->get_render_info();
             ImGui::Text("Number of objects: %i\nNumber of culled objects: %i\nNumber of checks: %i",

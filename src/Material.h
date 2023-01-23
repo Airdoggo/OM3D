@@ -47,6 +47,7 @@ class Material {
         static Material textured_material();
         static Material textured_normal_mapped_material();
         static Material debug_material();
+        static Material aabb_material();
 
     private:
         std::shared_ptr<Program> _program;

@@ -15,6 +15,7 @@ enum DebugView {
     Albedo,
     Normals,
     Depth,
+    AABB,
     Tiles,
 
     DebugView_Size,
@@ -29,9 +30,10 @@ class ImGuiRenderer : NonMovable {
 
         void display_debug_mode();
 
-        const char *debug_views[5] = { "No debug", "Albedo", "Normals", "Depth", "Tiles" };
+        const char *debug_views[6] = { "No debug", "Albedo", "Normals", "Depth", "BVH Hierarchy", "Tiles" };
         uint32_t debug_mode = 0;
         int bvh_subdivisions = 4;
+        int aabb_render_level = 0;
 
     private:
         void render(const ImDrawData* draw_data);
