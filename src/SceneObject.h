@@ -17,7 +17,6 @@ class SceneObject : NonCopyable {
 
         void render() const;
         void render(int nb_instances) const;
-        void render_light_volume(const glm::vec3 &position, float radius, const glm::vec3 &color) const;
 
         void set_transform(const glm::mat4& tr);
         const glm::mat4& transform() const;

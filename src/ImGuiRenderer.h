@@ -10,6 +10,16 @@ struct GLFWwindow;
 
 namespace OM3D {
 
+enum DebugView {
+    None,
+    Albedo,
+    Normals,
+    Depth,
+    Tiles,
+
+    DebugView_Size,
+};
+
 class ImGuiRenderer : NonMovable {
     public:
         ImGuiRenderer(GLFWwindow* window);
@@ -19,7 +29,7 @@ class ImGuiRenderer : NonMovable {
 
         void display_debug_mode();
 
-        const char *debug_views[4] = { "No debug", "Albedo", "Normals", "Depth" };
+        const char *debug_views[5] = { "No debug", "Albedo", "Normals", "Depth", "Tiles" };
         uint32_t debug_mode = 0;
         int bvh_subdivisions = 4;
 

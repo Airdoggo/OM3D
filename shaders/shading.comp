@@ -23,6 +23,7 @@ uniform mat4 inv_viewproj;
 uniform mat4 view_mat;
 uniform mat4 proj_mat;
 uniform vec2 screen_size;
+uniform uint debug;
 
 shared uint lights_indices[NB_LIGHTS];
 shared uint tile_nb_lights;
@@ -110,6 +111,10 @@ void main() {
 
     barrier();
 
+    if (debug != 0) {
+        imageStore(out_color, coord, vec4(vec3(float(tile_nb_lights) / NB_LIGHTS), 1.0));
+        return;
+    }
 
     // Light Calculation
     if (depth == 0.0) { // Background
@@ -136,7 +141,6 @@ void main() {
 
     vec3 color = albedo * acc;
 
-    //imageStore(out_color, coord, vec4(vec3(float(tile_nb_lights) / NB_LIGHTS), 1.0));
     imageStore(out_color, coord, vec4(albedo * acc, 1.0));
 }
 

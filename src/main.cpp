@@ -207,7 +207,7 @@ int main(int, char**) {
         normals.bind(1);
         depth.bind(2);
 
-        if (imgui.debug_mode) // Debug view
+        if (imgui.debug_mode >= Albedo && imgui.debug_mode <= Depth) // Debug view
         {
             debug_material.bind();
 
@@ -223,6 +223,7 @@ int main(int, char**) {
             shading_program->set_uniform(HASH("inv_viewproj"), glm::inverse(scene_view.camera().view_proj_matrix()));
             shading_program->set_uniform(HASH("proj_mat"), scene_view.camera().projection_matrix());
             shading_program->set_uniform(HASH("view_mat"), scene_view.camera().view_matrix());
+            shading_program->set_uniform(HASH("debug"), imgui.debug_mode);
             scene->bind_buffers();
             
             glDispatchCompute(align_up_to(window_size.x, 16) / 16, align_up_to(window_size.y, 16) / 16, 1);
